@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Beranda from './pages/Beranda';
 import DetailIklan from './pages/DetailIklan';
 import PasangIklan from './pages/PasangIklan';
+import SuksesPasangIklan from './pages/SuksesPasangIklan';
 import Login from './pages/Login';
 import Daftar from './pages/Daftar';
 import Profil from './pages/Profil';
@@ -31,6 +32,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <PasangIklan />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'pasang-iklan/sukses',
+        element: (
+          <ProtectedRoute>
+            <SuksesPasangIklan />
           </ProtectedRoute>
         ),
       },
