@@ -102,6 +102,25 @@ export function AuthProvider({ children }) {
       },
     });
     if (error) throw error;
+
+    if (data?.user) {
+      // Otomatis buat data profil dasar di tabel profiles
+      try {
+        let daerahId = 1;
+        const { data: daerahData } = await supabase.from('daerah').select('id').limit(1).single();
+        if (daerahData?.id) daerahId = daerahData.id;
+
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          nama_lengkap: namaLengkap,
+          daerah_id: daerahId,
+          skor_kepercayaan: 5.0,
+        });
+      } catch (err) {
+        console.warn('Peringatan pembuatan profil otomatis:', err.message);
+      }
+    }
+
     return data;
   };
 
