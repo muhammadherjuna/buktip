@@ -1,7 +1,8 @@
 /**
- * Helper Watermark Otomatis Buktip Menggunakan HTML5 Canvas API
- * Menambahkan watermark transparan "Buktip - @[NamaPengguna]" di pojok kanan bawah foto
- * sebelum diunggah ke Supabase Storage.
+ * Helper Watermark & Kompresi Otomatis Buktip Menggunakan HTML5 Canvas API
+ * - Menyesuaikan dimensi maksimal gambar (max 1600px) agar tajam dan hemat ukuran
+ * - Mengompresi file menjadi JPEG optimal (~200KB - 400KB) agar tidak melebihi limit Supabase Storage
+ * - Menambahkan watermark transparan "Buktip - @[NamaPengguna]" di pojok kanan bawah
  */
 
 export async function applyWatermark(file, username = 'Pengguna') {
@@ -19,6 +20,24 @@ export async function applyWatermark(file, username = 'Pengguna') {
         try {
           URL.revokeObjectURL(objectUrl);
 
+          let originalWidth = img.naturalWidth || img.width;
+          let originalHeight = img.naturalHeight || img.height;
+
+          // Batasi resolusi maksimal 1600px untuk ketajaman optimal & ukuran file ringan
+          const MAX_SIZE = 1600;
+          let targetWidth = originalWidth;
+          let targetHeight = originalHeight;
+
+          if (targetWidth > MAX_SIZE || targetHeight > MAX_SIZE) {
+            if (targetWidth > targetHeight) {
+              targetHeight = Math.round((targetHeight * MAX_SIZE) / targetWidth);
+              targetWidth = MAX_SIZE;
+            } else {
+              targetWidth = Math.round((targetWidth * MAX_SIZE) / targetHeight);
+              targetHeight = MAX_SIZE;
+            }
+          }
+
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
 
@@ -27,15 +46,19 @@ export async function applyWatermark(file, username = 'Pengguna') {
             return;
           }
 
-          canvas.width = img.naturalWidth || img.width;
-          canvas.height = img.naturalHeight || img.height;
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
 
-          // Gambar foto asli
-          ctx.drawImage(img, 0, 0);
+          // Aktifkan perataan gambar berkualitas tinggi
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
 
-          // Hitung ukuran teks proporsional terhadap resolusi foto
-          const fontSize = Math.max(14, Math.floor(canvas.width * 0.025));
-          const paddingX = Math.floor(fontSize * 0.8);
+          // Gambar foto dengan dimensi yang sudah dioptimasi
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+          // Hitung ukuran watermark proporsional
+          const fontSize = Math.max(14, Math.floor(canvas.width * 0.024));
+          const paddingX = Math.floor(fontSize * 0.75);
           const paddingY = Math.floor(fontSize * 0.4);
           const margin = Math.floor(fontSize * 0.8);
 
@@ -63,25 +86,25 @@ export async function applyWatermark(file, username = 'Pengguna') {
           }
 
           // Gambar teks watermark putih transparan
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
           ctx.fillText(watermarkText, badgeX + paddingX, badgeY + badgeHeight / 2);
 
-          // Konversi kembali ke File
-          const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          // Konversi ke File JPEG dengan kompresi optimal 0.82 (kualitas tinggi, ukuran kecil < 500KB)
           canvas.toBlob(
             (blob) => {
               if (blob) {
-                const watermarkedFile = new File([blob], file.name, {
-                  type: mimeType,
+                const baseName = file.name.replace(/\.[^/.]+$/, '');
+                const optimizedFile = new File([blob], `${baseName}.jpg`, {
+                  type: 'image/jpeg',
                   lastModified: Date.now(),
                 });
-                resolve(watermarkedFile);
+                resolve(optimizedFile);
               } else {
                 resolve(file);
               }
             },
-            mimeType,
-            0.9
+            'image/jpeg',
+            0.82
           );
         } catch (err) {
           console.warn('Gagal memproses watermark pada canvas, menggunakan file asli:', err);
