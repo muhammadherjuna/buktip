@@ -104,6 +104,12 @@ export default function PasangIklan() {
 
   const adaNomorWa = Boolean(profile?.nomor_hp && profile.nomor_hp.trim().length >= 8);
 
+  // Handler Input Harga (Otomatis bersihkan titik, koma, spasi, Rp saat diketik atau dipaste)
+  const handleHargaChange = (e) => {
+    const rawDigits = e.target.value.replace(/\D/g, '');
+    setHarga(rawDigits);
+  };
+
   // Helper validasi file
   const validateFile = (file) => {
     if (!allowedFormats.includes(file.type.toLowerCase())) {
@@ -481,14 +487,13 @@ export default function PasangIklan() {
               <input
                 id="harga"
                 name="harga"
-                type="number"
-                placeholder="Contoh: 4500000"
-                value={harga}
-                onChange={(e) => setHarga(e.target.value)}
+                type="text"
+                inputMode="numeric"
+                placeholder="Contoh: 4.500.000"
+                value={harga ? Number(harga).toLocaleString('id-ID') : ''}
+                onChange={handleHargaChange}
                 required
-                min="100000"
-                step="10000"
-                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition font-mono font-bold text-orange-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition font-mono font-bold text-orange-600 ${
                   !isHargaValid ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
                 }`}
               />
@@ -646,13 +651,18 @@ export default function PasangIklan() {
               <input
                 id="kesehatan_baterai"
                 name="kesehatan_baterai"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 placeholder="Contoh: 88"
-                min="0"
-                max="100"
+                maxLength="3"
                 value={kesehatanBaterai}
-                onChange={(e) => setKesehatanBaterai(e.target.value)}
-                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  if (!val || Number(val) <= 100) {
+                    setKesehatanBaterai(val);
+                  }
+                }}
+                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition ${
                   !isBateraiValid ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
                 }`}
               />
