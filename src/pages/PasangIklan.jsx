@@ -445,11 +445,11 @@ export default function PasangIklan() {
               Nomor WhatsApp Belum Terisi di Profil
             </h3>
             <p className="text-xs text-amber-800 leading-relaxed">
-              Anda belum mengisi nomor WhatsApp. Silakan lengkapi{' '}
+              Anda belum mengisi Nomor WhatsApp. Silakan lengkapi{' '}
               <Link to="/profil" className="font-bold underline text-amber-950 hover:text-amber-900">
-                Profil Anda
+                Profil Saya
               </Link>{' '}
-              agar calon pembeli dapat menghubungi Anda saat tertarik dengan iklan ini.
+              terlebih dahulu agar pembeli dapat menghubungi Anda.
             </p>
           </div>
         </div>

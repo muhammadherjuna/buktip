@@ -132,6 +132,13 @@ export function AuthProvider({ children }) {
     setProfile(null);
   };
 
+  // Fungsi Refresh Data Profil Pengguna
+  const refreshProfile = async () => {
+    if (user?.id) {
+      await fetchProfile(user.id);
+    }
+  };
+
   const value = {
     user,
     profile,
@@ -139,6 +146,7 @@ export function AuthProvider({ children }) {
     login,
     daftar,
     logout,
+    refreshProfile,
   };
 
   return (

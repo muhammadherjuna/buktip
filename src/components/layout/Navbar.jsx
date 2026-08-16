@@ -102,6 +102,22 @@ export default function Navbar() {
                     onMouseLeave={() => setDropdownOpen(false)}
                   >
                     <Link
+                      to="/profil"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition font-medium"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Profil Saya</span>
+                    </Link>
+                    <Link
+                      to="/pasang-iklan"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 transition font-medium"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      <span>Pasang Iklan</span>
+                    </Link>
+                    <Link
                       to="/iklan-saya"
                       onClick={closeMenus}
                       className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition"
@@ -116,14 +132,6 @@ export default function Navbar() {
                     >
                       <Heart className="w-4 h-4" />
                       <span>Favorit</span>
-                    </Link>
-                    <Link
-                      to="/profil"
-                      onClick={closeMenus}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition"
-                    >
-                      <User className="w-4 h-4" />
-                      <span>Profil</span>
                     </Link>
                     <div className="border-t border-slate-100 my-1"></div>
                     <button
