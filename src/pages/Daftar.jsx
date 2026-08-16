@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, User, Mail, Lock, Loader2, ShieldCheck } from 'lucide-react';
+import { User, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -9,28 +9,35 @@ export default function Daftar() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [konfirmasiPassword, setKonfirmasiPassword] = useState('');
+  const [setujuSyarat, setSetujuSyarat] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const { daftar } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage('');
 
     if (!namaLengkap.trim()) {
-      toast.error('Silakan masukkan nama lengkap Anda');
+      setErrorMessage('Silakan masukkan nama lengkap Anda');
       return;
     }
     if (!email.trim() || !password) {
-      toast.error('Silakan isi email dan kata sandi');
+      setErrorMessage('Silakan isi email dan kata sandi');
       return;
     }
     if (password.length < 6) {
-      toast.error('Kata sandi minimal 6 karakter');
+      setErrorMessage('Kata sandi minimal 6 karakter');
       return;
     }
     if (password !== konfirmasiPassword) {
-      toast.error('Konfirmasi kata sandi tidak cocok');
+      setErrorMessage('Konfirmasi kata sandi tidak cocok dengan kata sandi');
+      return;
+    }
+    if (!setujuSyarat) {
+      setErrorMessage('Anda harus menyetujui Ketentuan Layanan & Kebijakan Privasi');
       return;
     }
 
@@ -41,134 +48,189 @@ export default function Daftar() {
       navigate('/pasang-iklan', { replace: true });
     } catch (err) {
       console.error('Gagal mendaftar:', err);
-      toast.error(err.message || 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.');
+      setErrorMessage(err.message || 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.');
+      toast.error('Gagal mendaftar akun');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md w-full mx-auto my-8 p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-6">
-      {/* Header Form */}
-      <div className="text-center space-y-2">
-        <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto shadow-xs">
-          <UserPlus className="w-7 h-7" />
+    <div className="flex-1 flex items-center justify-center py-6 px-4">
+      <div className="max-w-[400px] w-full bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 sm:p-8 space-y-6">
+        
+        {/* Header Form */}
+        <div className="text-center space-y-1.5">
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            Buat Akun Buktip
+          </h1>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Jual beli HP bekas lebih aman dengan bukti kepemilikan
+          </p>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900">
-          Daftar Akun Buktip
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500">
-          Bergabung dengan komunitas jual beli HP bekas terpercaya
-        </p>
-      </div>
 
-      {/* Formulir Pendaftaran */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Input Nama Lengkap */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-700">
-            Nama Lengkap
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <User className="w-4 h-4" />
-            </div>
-            <input
-              type="text"
-              placeholder="Contoh: Budi Santoso"
-              value={namaLengkap}
-              onChange={(e) => setNamaLengkap(e.target.value)}
-              required
-              className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
-            />
+        {/* Pesan Error di Atas Form */}
+        {errorMessage && (
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+            <span>{errorMessage}</span>
           </div>
-        </div>
+        )}
 
-        {/* Input Email */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-700">
-            Alamat Email
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Mail className="w-4 h-4" />
+        {/* Formulir Pendaftaran */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Input Nama Lengkap */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 block">
+              Nama Lengkap
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <User className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                placeholder="Contoh: Budi Santoso"
+                value={namaLengkap}
+                onChange={(e) => {
+                  setNamaLengkap(e.target.value);
+                  if (errorMessage) setErrorMessage('');
+                }}
+                required
+                className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+              />
             </div>
-            <input
-              type="email"
-              placeholder="nama@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
-            />
           </div>
-        </div>
 
-        {/* Input Password */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-700">
-            Kata Sandi (Min. 6 Karakter)
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Lock className="w-4 h-4" />
+          {/* Input Email */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 block">
+              Alamat Email
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Mail className="w-4 h-4" />
+              </div>
+              <input
+                type="email"
+                placeholder="nama@email.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errorMessage) setErrorMessage('');
+                }}
+                required
+                className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+              />
             </div>
-            <input
-              type="password"
-              placeholder="Minimal 6 karakter"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
-            />
           </div>
-        </div>
 
-        {/* Konfirmasi Password */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-700">
-            Konfirmasi Kata Sandi
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Lock className="w-4 h-4" />
+          {/* Input Password */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-700">
+                Kata Sandi
+              </label>
+              <span className="text-[11px] text-gray-500 font-normal">
+                Minimal 6 karakter
+              </span>
             </div>
-            <input
-              type="password"
-              placeholder="Ulangi kata sandi"
-              value={konfirmasiPassword}
-              onChange={(e) => setKonfirmasiPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Lock className="w-4 h-4" />
+              </div>
+              <input
+                type="password"
+                placeholder="Minimal 6 karakter"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errorMessage) setErrorMessage('');
+                }}
+                required
+                minLength={6}
+                className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+              />
+            </div>
           </div>
+
+          {/* Konfirmasi Password */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 block">
+              Konfirmasi Sandi
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Lock className="w-4 h-4" />
+              </div>
+              <input
+                type="password"
+                placeholder="Ulangi kata sandi"
+                value={konfirmasiPassword}
+                onChange={(e) => {
+                  setKonfirmasiPassword(e.target.value);
+                  if (errorMessage) setErrorMessage('');
+                }}
+                required
+                minLength={6}
+                className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+              />
+            </div>
+          </div>
+
+          {/* Checkbox Persetujuan Syarat & Ketentuan */}
+          <div className="pt-1">
+            <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-600 leading-relaxed">
+              <input
+                type="checkbox"
+                checked={setujuSyarat}
+                onChange={(e) => {
+                  setSetujuSyarat(e.target.checked);
+                  if (errorMessage) setErrorMessage('');
+                }}
+                className="mt-0.5 w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500 shrink-0 cursor-pointer"
+              />
+              <span>
+                Saya setuju dengan <span className="text-teal-600 font-medium">Ketentuan Layanan</span> & <span className="text-teal-600 font-medium">Kebijakan Privasi</span>
+              </span>
+            </label>
+          </div>
+
+          {/* Tombol Submit */}
+          <button
+            type="submit"
+            disabled={loading || !setujuSyarat}
+            className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed mt-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Memproses...</span>
+              </>
+            ) : (
+              <span>Daftar Akun Baru</span>
+            )}
+          </button>
+        </form>
+
+        {/* Tautan ke Halaman Login */}
+        <div className="text-center pt-2 border-t border-slate-100 text-xs text-slate-600">
+          <span>Sudah punya akun? </span>
+          <Link
+            to="/login"
+            className="font-bold text-teal-600 hover:text-teal-700 hover:underline"
+          >
+            Masuk di sini
+          </Link>
         </div>
 
-        {/* Tombol Submit */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed mt-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Mendaftarkan Akun...</span>
-            </>
-          ) : (
-            <span>Daftar Akun</span>
-          )}
-        </button>
-      </form>
+        {/* Teks Keamanan di Bawah */}
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 pt-1">
+          <Lock className="w-3.5 h-3.5" />
+          <span>Kata sandi disimpan terenkripsi</span>
+        </div>
 
-      {/* Footer Pindah ke Login */}
-      <div className="text-center pt-2 border-t border-slate-100 text-xs text-slate-500">
-        Sudah memiliki akun?{' '}
-        <Link to="/login" className="text-teal-600 font-bold hover:underline">
-          Masuk di sini
-        </Link>
       </div>
     </div>
   );
