@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Upload, 
@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   PhoneCall,
   Lock,
-  RefreshCw
+  RefreshCw,
+  RotateCcw
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -63,20 +64,93 @@ export default function PasangIklan() {
     }
   };
 
-  // State Form
-  const [merek, setMerek] = useState('Apple');
-  const [tipe, setTipe] = useState('');
-  const [kapasitas, setKapasitas] = useState('128 GB');
-  const [warna, setWarna] = useState('');
-  const [kondisi, setKondisi] = useState('Sangat Baik');
-  const [harga, setHarga] = useState('');
-  const [bisaNego, setBisaNego] = useState(true);
+  // Baca draft tersimpan di localStorage (agar data inputan aman tidak hilang saat refresh)
+  const draftAwal = (() => {
+    try {
+      const saved = localStorage.getItem('buktip_draft_iklan');
+      return saved ? JSON.parse(saved) : null;
+    } catch (_) {
+      return null;
+    }
+  })();
 
-  const [lokasiDetail, setLokasiDetail] = useState('');
-  const [kelengkapan, setKelengkapan] = useState('');
-  const [deskripsi, setDeskripsi] = useState('');
-  const [imei, setImei] = useState('');
-  const [kesehatanBaterai, setKesehatanBaterai] = useState('');
+  // State Form (Otomatis pulihkan dari draft jika ada)
+  const [merek, setMerek] = useState(draftAwal?.merek || 'Apple');
+  const [tipe, setTipe] = useState(draftAwal?.tipe || '');
+  const [kapasitas, setKapasitas] = useState(draftAwal?.kapasitas || '128 GB');
+  const [warna, setWarna] = useState(draftAwal?.warna || '');
+  const [kondisi, setKondisi] = useState(draftAwal?.kondisi || 'Sangat Baik');
+  const [harga, setHarga] = useState(draftAwal?.harga || '');
+  const [bisaNego, setBisaNego] = useState(draftAwal?.bisaNego ?? true);
+
+  const [lokasiDetail, setLokasiDetail] = useState(draftAwal?.lokasiDetail || '');
+  const [kelengkapan, setKelengkapan] = useState(draftAwal?.kelengkapan || '');
+  const [deskripsi, setDeskripsi] = useState(draftAwal?.deskripsi || '');
+  const [imei, setImei] = useState(draftAwal?.imei || '');
+  const [kesehatanBaterai, setKesehatanBaterai] = useState(draftAwal?.kesehatanBaterai || '');
+
+  // Simpan draft form secara otomatis setiap kali ada perubahan data
+  useEffect(() => {
+    try {
+      const dataDraft = {
+        merek,
+        tipe,
+        kapasitas,
+        warna,
+        kondisi,
+        harga,
+        bisaNego,
+        lokasiDetail,
+        kelengkapan,
+        deskripsi,
+        imei,
+        kesehatanBaterai,
+      };
+      localStorage.setItem('buktip_draft_iklan', JSON.stringify(dataDraft));
+    } catch (_) {}
+  }, [
+    merek,
+    tipe,
+    kapasitas,
+    warna,
+    kondisi,
+    harga,
+    bisaNego,
+    lokasiDetail,
+    kelengkapan,
+    deskripsi,
+    imei,
+    kesehatanBaterai,
+  ]);
+
+  // Handler Hapus Draft / Bersihkan Form jika pengguna ingin mulai dari awal
+  const handleResetDraft = () => {
+    const konfirmasi = window.confirm('Apakah Anda yakin ingin menghapus draft dan mengosongkan seluruh formulir?');
+    if (konfirmasi) {
+      try {
+        localStorage.removeItem('buktip_draft_iklan');
+      } catch (_) {}
+      setMerek('Apple');
+      setTipe('');
+      setKapasitas('128 GB');
+      setWarna('');
+      setKondisi('Sangat Baik');
+      setHarga('');
+      setBisaNego(true);
+      setLokasiDetail('');
+      setKelengkapan('');
+      setDeskripsi('');
+      setImei('');
+      setKesehatanBaterai('');
+      setFotoUtamaFile(null);
+      setFotoUtamaPreview(null);
+      setFotoTambahanFiles([]);
+      setFotoTambahanPreviews([]);
+      setFotoBuktiFile(null);
+      setFotoBuktiPreview(null);
+      toast.success('Draft formulir berhasil dibersihkan.');
+    }
+  };
 
   // State File Foto
   const [fotoUtamaFile, setFotoUtamaFile] = useState(null);
@@ -306,8 +380,9 @@ export default function PasangIklan() {
 
       toast.success('Iklan berhasil dipasang!');
 
-      // Hapus kode verifikasi dari localStorage agar iklan berikutnya mendapat kode baru
+      // Hapus draft dan kode verifikasi dari localStorage agar iklan berikutnya bersih
       try {
+        localStorage.removeItem('buktip_draft_iklan');
         localStorage.removeItem('buktip_kode_verifikasi');
       } catch (_) {}
 
@@ -333,14 +408,28 @@ export default function PasangIklan() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header Halaman */}
-      <div className="space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-          Pasang Iklan Smartphone
-        </h1>
-        <p className="text-sm text-slate-500">
-          Lengkapi detail barang dan sertakan foto bukti kepemilikan agar iklan Anda terverifikasi.
-        </p>
+      {/* Header Halaman & Tombol Reset Draft */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            Pasang Iklan Smartphone
+          </h1>
+          <p className="text-sm text-slate-500">
+            Lengkapi detail barang dan sertakan foto bukti kepemilikan agar iklan Anda terverifikasi.
+          </p>
+        </div>
+
+        {(tipe || harga || lokasiDetail || deskripsi) && (
+          <button
+            type="button"
+            onClick={handleResetDraft}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-xl transition cursor-pointer self-start sm:self-center"
+            title="Kosongkan seluruh isian formulir"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset Formulir</span>
+          </button>
+        )}
       </div>
 
       {/* Peringatan Nomor WhatsApp jika belum diisi di profil */}
