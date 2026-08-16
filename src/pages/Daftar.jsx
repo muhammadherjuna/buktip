@@ -105,7 +105,7 @@ export default function Daftar() {
           
           {/* Input Nama Lengkap */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 block">
+            <label htmlFor="nama_lengkap" className="text-xs font-semibold text-slate-700 block cursor-pointer">
               Nama Lengkap
             </label>
             <div className="relative">
@@ -113,7 +113,10 @@ export default function Daftar() {
                 <User className="w-4 h-4" />
               </div>
               <input
+                id="nama_lengkap"
+                name="nama_lengkap"
                 type="text"
+                autoComplete="name"
                 placeholder="Contoh: Budi Santoso"
                 value={namaLengkap}
                 onChange={(e) => {
@@ -128,7 +131,7 @@ export default function Daftar() {
 
           {/* Input Email */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 block">
+            <label htmlFor="email" className="text-xs font-semibold text-slate-700 block cursor-pointer">
               Alamat Email
             </label>
             <div className="relative">
@@ -136,7 +139,10 @@ export default function Daftar() {
                 <Mail className="w-4 h-4" />
               </div>
               <input
+                id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 placeholder="nama@email.com"
                 value={email}
                 onChange={(e) => {
@@ -159,7 +165,7 @@ export default function Daftar() {
           {/* Input Password */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="sandi" className="text-xs font-semibold text-slate-700 cursor-pointer">
                 Kata Sandi
               </label>
               <span className="text-[11px] text-gray-500 font-normal">
@@ -171,7 +177,10 @@ export default function Daftar() {
                 <Lock className="w-4 h-4" />
               </div>
               <input
+                id="sandi"
+                name="sandi"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 placeholder="Minimal 6 karakter"
                 value={password}
                 onChange={(e) => {
@@ -207,7 +216,7 @@ export default function Daftar() {
 
           {/* Konfirmasi Password */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 block">
+            <label htmlFor="konfirmasi_sandi" className="text-xs font-semibold text-slate-700 block cursor-pointer">
               Konfirmasi Sandi
             </label>
             <div className="relative">
@@ -215,7 +224,10 @@ export default function Daftar() {
                 <Lock className="w-4 h-4" />
               </div>
               <input
+                id="konfirmasi_sandi"
+                name="konfirmasi_sandi"
                 type={showKonfirmasiPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 placeholder="Ulangi kata sandi"
                 value={konfirmasiPassword}
                 onChange={(e) => {
@@ -246,8 +258,10 @@ export default function Daftar() {
 
           {/* Checkbox Persetujuan Syarat & Ketentuan */}
           <div className="pt-1">
-            <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-600 leading-relaxed">
+            <label htmlFor="setuju_syarat" className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-600 leading-relaxed">
               <input
+                id="setuju_syarat"
+                name="setuju_syarat"
                 type="checkbox"
                 checked={setujuSyarat}
                 onChange={(e) => {

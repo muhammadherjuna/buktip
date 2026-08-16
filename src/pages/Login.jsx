@@ -81,7 +81,7 @@ export default function Login() {
           
           {/* Input Email */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 block">
+            <label htmlFor="email" className="text-xs font-semibold text-slate-700 block cursor-pointer">
               Alamat Email
             </label>
             <div className="relative">
@@ -89,7 +89,10 @@ export default function Login() {
                 <Mail className="w-4 h-4" />
               </div>
               <input
+                id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 placeholder="nama@email.com"
                 value={email}
                 onChange={(e) => {
@@ -112,7 +115,7 @@ export default function Login() {
           {/* Input Password */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="sandi" className="text-xs font-semibold text-slate-700 cursor-pointer">
                 Kata Sandi
               </label>
               <button
@@ -128,7 +131,10 @@ export default function Login() {
                 <Lock className="w-4 h-4" />
               </div>
               <input
+                id="sandi"
+                name="sandi"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 placeholder="Min. 6 karakter"
                 value={password}
                 onChange={(e) => {
