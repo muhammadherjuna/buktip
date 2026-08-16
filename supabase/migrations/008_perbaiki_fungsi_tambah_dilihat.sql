@@ -3,7 +3,10 @@
 -- Cara pakai: Buka Supabase Dashboard → SQL Editor → Tempel kode ini → Run
 -------------------------------------------------------------------------------
 
--- 1. Buat / perbarui fungsi RPC tambah_dilihat agar dapat menambah counter secara realtime
+-- 1. Hapus fungsi lama yang bertipe RETURNS void agar tipe data kembalian (RETURNS int) dapat diganti
+DROP FUNCTION IF EXISTS tambah_dilihat(bigint);
+
+-- 2. Buat fungsi RPC tambah_dilihat baru yang mengembalikan angka counter terbaru
 CREATE OR REPLACE FUNCTION tambah_dilihat(id_iklan bigint)
 RETURNS int AS $$
 DECLARE
@@ -18,5 +21,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
--- 2. Berikan hak akses eksekusi ke peran anon dan authenticated
+-- 3. Berikan hak akses eksekusi ke peran anon dan authenticated
 GRANT EXECUTE ON FUNCTION tambah_dilihat(bigint) TO anon, authenticated;
