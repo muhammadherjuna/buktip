@@ -13,7 +13,8 @@ import {
   XCircle, 
   AlertTriangle,
   PhoneCall,
-  Lock
+  Lock,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -25,11 +26,42 @@ export default function PasangIklan() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
-  // Generate kode verifikasi unik di frontend saat form dibuka (STABIL)
-  const [kodeVerifikasi] = useState(() => {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `KB-${randomNum}`;
+  // Kode verifikasi STABIL disimpan di localStorage
+  const [kodeVerifikasi, setKodeVerifikasi] = useState(() => {
+    try {
+      const savedCode = localStorage.getItem('buktip_kode_verifikasi');
+      if (savedCode && /^KB-\d{4}$/.test(savedCode)) {
+        return savedCode;
+      }
+    } catch (_) {}
+    const newCode = `KB-${Math.floor(1000 + Math.random() * 9000)}`;
+    try {
+      localStorage.setItem('buktip_kode_verifikasi', newCode);
+    } catch (_) {}
+    return newCode;
   });
+
+  // Handler Ganti Kode Verifikasi Baru
+  const handleGantiKode = () => {
+    const konfirmasi = window.confirm(
+      'Yakin ganti kode? Foto bukti yang sudah dibuat dengan kode lama tidak akan cocok.'
+    );
+    if (konfirmasi) {
+      const newCode = `KB-${Math.floor(1000 + Math.random() * 9000)}`;
+      setKodeVerifikasi(newCode);
+      try {
+        localStorage.setItem('buktip_kode_verifikasi', newCode);
+      } catch (_) {}
+
+      if (fotoBuktiFile || fotoBuktiPreview) {
+        setFotoBuktiFile(null);
+        setFotoBuktiPreview(null);
+        toast('Kode diganti. Silakan foto ulang dengan kode baru ini.');
+      } else {
+        toast.success('Kode verifikasi baru berhasil dibuat!');
+      }
+    }
+  };
 
   // State Form
   const [merek, setMerek] = useState('Apple');
@@ -268,6 +300,11 @@ export default function PasangIklan() {
 
       toast.success('Iklan berhasil dipasang!');
 
+      // Hapus kode verifikasi dari localStorage agar iklan berikutnya mendapat kode baru
+      try {
+        localStorage.removeItem('buktip_kode_verifikasi');
+      } catch (_) {}
+
       // Arahkan ke Halaman Sukses
       navigate('/pasang-iklan/sukses', {
         state: {
@@ -413,7 +450,7 @@ export default function PasangIklan() {
                 placeholder="Contoh: Sierra Blue, Phantom Black"
                 value={warna}
                 onChange={(e) => setWarna(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition"
               />
             </div>
 
@@ -803,37 +840,48 @@ export default function PasangIklan() {
               {/* Banner Petunjuk & Tampilan Kode Verifikasi */}
               <div className="bg-emerald-50/90 border-2 border-emerald-200 rounded-2xl p-5 sm:p-6 space-y-5">
                 
-                {/* Tampilan Kode Verifikasi Besar */}
-                <div className="bg-white rounded-xl border border-emerald-300 p-4 text-center shadow-xs space-y-1">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                    Kode Verifikasi Anda:
-                  </span>
+                {/* Tampilan Kode Verifikasi Besar & Tombol Ganti Kode */}
+                <div className="bg-white rounded-xl border border-emerald-300 p-4 sm:p-5 text-center shadow-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                      Kode Verifikasi Anda:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleGantiKode}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg transition cursor-pointer"
+                      title="Generate kode verifikasi baru"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Ganti Kode</span>
+                    </button>
+                  </div>
                   <div className="text-3xl sm:text-4xl font-mono font-black text-teal-600 tracking-widest py-1">
                     {kodeVerifikasi}
                   </div>
                   <span className="text-[11px] text-slate-400 block">
-                    Kode ini menghubungkan unit smartphone dengan foto bukti fisik Anda
+                    Tulis kode unik di atas di selembar kertas untuk foto bukti
                   </span>
                 </div>
 
-                {/* 3 Langkah Mudah */}
+                {/* 3 Langkah Mudah (Fokus Kertas & Pulpen) */}
                 <div className="space-y-2 text-xs sm:text-sm text-emerald-950">
                   <p className="font-bold text-emerald-900 flex items-center gap-1.5">
                     <Info className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>Cara Membuat Foto Bukti yang Benar:</span>
                   </p>
                   <p className="text-xs text-emerald-800">
-                    Ikuti 3 langkah mudah ini:
+                    Ikuti 3 langkah MUDAH ini:
                   </p>
                   <ol className="list-decimal list-inside space-y-1.5 text-emerald-900 pl-1 leading-relaxed">
                     <li>
-                      Buka halaman ini di HP yang akan dijual, atau tulis kode di atas di selembar kertas
+                      Siapkan selembar kertas dan pulpen
                     </li>
                     <li>
-                      Letakkan HP yang dijual berdampingan dengan kode tersebut
+                      Tulis kode <strong className="font-mono text-teal-800 bg-emerald-100/80 px-1.5 py-0.5 rounded">{kodeVerifikasi}</strong> dengan jelas dan besar di kertas
                     </li>
                     <li>
-                      Foto keduanya dalam satu bingkai sehingga kode terlihat jelas
+                      Letakkan kertas tersebut berdampingan dengan HP yang dijual, lalu foto keduanya dalam satu bingkai
                     </li>
                   </ol>
                 </div>
@@ -859,7 +907,7 @@ export default function PasangIklan() {
                         />
                       </div>
                       <p className="text-[11px] text-emerald-800 font-medium text-center leading-tight">
-                        Kode terlihat jelas di layar / kertas foto
+                        Kode tertulis jelas di kertas berdampingan HP
                       </p>
                     </div>
 
@@ -877,7 +925,7 @@ export default function PasangIklan() {
                         />
                       </div>
                       <p className="text-[11px] text-red-700 font-medium text-center leading-tight">
-                        Hanya foto unit tanpa kode verifikasi
+                        Tidak ada kode verifikasi yang terlihat
                       </p>
                     </div>
 
