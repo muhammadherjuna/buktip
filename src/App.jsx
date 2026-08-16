@@ -14,6 +14,7 @@ import Profil from './pages/Profil';
 import IklanSaya from './pages/IklanSaya';
 import Favorit from './pages/Favorit';
 import Tentang from './pages/Tentang';
+import SemuaIklan from './pages/SemuaIklan';
 
 const router = createBrowserRouter([
   {
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <Beranda />,
+      },
+      {
+        path: 'semua-iklan',
+        element: <SemuaIklan />,
       },
       {
         path: 'iklan/:id',

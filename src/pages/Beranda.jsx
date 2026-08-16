@@ -265,8 +265,8 @@ export default function Beranda() {
         </Link>
 
         {/* Tombol 2: Cari HP Bekas (Teal Outline) */}
-        <a
-          href="#daftar-iklan"
+        <Link
+          to="/semua-iklan"
           className="group bg-white hover:bg-teal-50/60 border-2 border-teal-600/30 hover:border-teal-600 text-slate-900 rounded-3xl p-5 sm:p-6 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-4 cursor-pointer"
         >
           <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -277,10 +277,10 @@ export default function Beranda() {
               Cari HP Bekas
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Jelajahi unit terverifikasi siap COD
+              Buka katalog lengkap dengan filter profesional
             </p>
           </div>
-        </a>
+        </Link>
 
         {/* Tombol 3: Cara Kerja (Slate Outline) */}
         <Link
@@ -437,15 +437,25 @@ export default function Beranda() {
               </p>
             </div>
 
-            {(searchQuery || lokasiQuery || selectedBrand !== 'Semua' || selectedPriceRange !== 'semua' || selectedKondisi !== 'semua' || sortBy !== 'terbaru') && (
-              <button
-                type="button"
-                onClick={handleResetFilter}
-                className="text-xs text-teal-600 hover:text-teal-800 font-bold underline cursor-pointer self-start sm:self-auto"
+            <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+              <Link
+                to="/semua-iklan"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-xs rounded-xl border border-teal-200 transition"
               >
-                Reset Semua Filter
-              </button>
-            )}
+                <span>Buka Katalog Lengkap (Filter)</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+
+              {(searchQuery || lokasiQuery || selectedBrand !== 'Semua' || selectedPriceRange !== 'semua' || selectedKondisi !== 'semua' || sortBy !== 'terbaru') && (
+                <button
+                  type="button"
+                  onClick={handleResetFilter}
+                  className="text-xs text-slate-500 hover:text-slate-800 font-semibold underline cursor-pointer"
+                >
+                  Reset Filter
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Baris 1: Pencarian Nama & Lokasi */}
