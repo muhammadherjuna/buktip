@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -17,9 +18,12 @@ export default function Login() {
   // Redirect ke rute tujuan sebelumnya atau ke Beranda
   const from = location.state?.from?.pathname || '/';
 
+  // Validasi format email real-time
+  const isEmailValid = !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
   const handleLupaPassword = (e) => {
     e.preventDefault();
-    toast('Fitur reset kata sandi segera hadir!');
+    toast('Fitur pemulihan sandi sedang dikembangkan');
   };
 
   const handleSubmit = async (e) => {
@@ -28,6 +32,11 @@ export default function Login() {
 
     if (!email.trim() || !password) {
       setErrorMessage('Silakan isi email dan kata sandi');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErrorMessage('Format email tidak benar');
       return;
     }
 
@@ -88,9 +97,16 @@ export default function Login() {
                   if (errorMessage) setErrorMessage('');
                 }}
                 required
-                className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                className={`w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:bg-white transition ${
+                  !isEmailValid ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
+                }`}
               />
             </div>
+            {!isEmailValid && (
+              <p className="text-[11px] text-red-500 font-medium">
+                Format email tidak benar
+              </p>
+            )}
           </div>
 
           {/* Input Password */}
@@ -112,7 +128,7 @@ export default function Login() {
                 <Lock className="w-4 h-4" />
               </div>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Min. 6 karakter"
                 value={password}
                 onChange={(e) => {
@@ -120,15 +136,23 @@ export default function Login() {
                   if (errorMessage) setErrorMessage('');
                 }}
                 required
-                className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                aria-label={showPassword ? 'Sembunyikan sandi' : 'Lihat sandi'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
           {/* Tombol Submit */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !isEmailValid}
             className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed mt-2"
           >
             {loading ? (
@@ -154,7 +178,7 @@ export default function Login() {
         </div>
 
         {/* Teks Keamanan di Bawah */}
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 pt-1">
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 pt-1">
           <Lock className="w-3.5 h-3.5" />
           <span>Data Anda dilindungi</span>
         </div>

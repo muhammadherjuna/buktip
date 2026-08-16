@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
   PlusCircle, 
@@ -19,6 +19,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -138,18 +139,22 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link
-                  to="/login"
-                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-teal-600 rounded-lg hover:bg-slate-50 transition"
-                >
-                  Masuk
-                </Link>
-                <Link
-                  to="/daftar"
-                  className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-sm transition"
-                >
-                  Daftar
-                </Link>
+                {location.pathname !== '/login' && (
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-teal-600 rounded-lg hover:bg-slate-50 transition"
+                  >
+                    Masuk
+                  </Link>
+                )}
+                {location.pathname !== '/daftar' && (
+                  <Link
+                    to="/daftar"
+                    className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-sm transition"
+                  >
+                    Daftar
+                  </Link>
+                )}
               </div>
             )}
           </div>
@@ -226,21 +231,25 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <Link
-                  to="/login"
-                  onClick={closeMenus}
-                  className="flex items-center justify-center px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg text-center"
-                >
-                  Masuk
-                </Link>
-                <Link
-                  to="/daftar"
-                  onClick={closeMenus}
-                  className="flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg text-center"
-                >
-                  Daftar
-                </Link>
+              <div className="grid grid-cols-1 gap-2 pt-1">
+                {location.pathname !== '/login' && (
+                  <Link
+                    to="/login"
+                    onClick={closeMenus}
+                    className="flex items-center justify-center px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg text-center"
+                  >
+                    Masuk
+                  </Link>
+                )}
+                {location.pathname !== '/daftar' && (
+                  <Link
+                    to="/daftar"
+                    onClick={closeMenus}
+                    className="flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg text-center"
+                  >
+                    Daftar
+                  </Link>
+                )}
               </div>
             )}
           </div>
