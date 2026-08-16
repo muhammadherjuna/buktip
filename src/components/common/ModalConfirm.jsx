@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, AlertCircle, HelpCircle, X } from 'lucide-react';
 
 export default function ModalConfirm({
@@ -45,9 +46,9 @@ export default function ModalConfirm({
 
   const currentTheme = iconConfig[type] || iconConfig.warning;
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-200"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-200"
       onClick={!isProcessing ? onClose : undefined}
     >
       <div 
@@ -99,6 +100,7 @@ export default function ModalConfirm({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
