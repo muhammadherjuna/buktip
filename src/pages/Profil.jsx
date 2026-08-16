@@ -101,20 +101,56 @@ export default function Profil() {
       setIsLoading(true);
 
       const payload = {
-        id: user.id,
         nama_lengkap: namaLengkap.trim(),
         nomor_hp: nomorWhatsapp.trim(),
         alamat_lengkap: alamatLengkap.trim() || null,
         diperbarui_pada: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      // Cek apakah profil sudah ada di tabel profiles
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .upsert(payload, { onConflict: 'id' });
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      let saveError = null;
 
-      // Perbarui state AuthContext agar nomor WA langsung terbaca di Pasang Iklan
+      if (existingProfile) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(payload)
+          .eq('id', user.id);
+        saveError = error;
+      } else {
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            ...payload,
+            skor_kepercayaan: 5.0,
+          });
+        saveError = error;
+      }
+
+      // Jika insert/update spesifik ada kendala, coba upsert
+      if (saveError && saveError.code !== '42501') {
+        const { error: upsertErr } = await supabase
+          .from('profiles')
+          .upsert({ id: user.id, ...payload }, { onConflict: 'id' });
+        saveError = upsertErr;
+      }
+
+      if (saveError) throw saveError;
+
+      // Update juga metadata nama lengkap di auth
+      try {
+        await supabase.auth.updateUser({
+          data: { nama_lengkap: namaLengkap.trim() }
+        });
+      } catch (_) {}
+
+      // Perbarui state AuthContext agar data terbaru langsung aktif di seluruh aplikasi
       if (refreshProfile) {
         await refreshProfile();
       }
@@ -124,7 +160,13 @@ export default function Profil() {
 
     } catch (err) {
       console.error('Gagal menyimpan profil:', err);
-      setErrorMessage(err.message || 'Terjadi kesalahan saat menyimpan profil');
+      let pesan = 'Gagal menyimpan profil. Silakan coba lagi.';
+      if (err.message?.includes('row-level security') || err.code === '42501') {
+        pesan = 'Izin database untuk profil belum lengkap. Silakan jalankan script SQL migrasi 006 di Supabase SQL Editor.';
+      } else if (err.message) {
+        pesan = err.message;
+      }
+      setErrorMessage(pesan);
       toast.error('Gagal menyimpan profil');
     } finally {
       setIsLoading(false);
