@@ -1,7 +1,17 @@
 import { formatRupiah } from '../../lib/utils';
+import { MapPin, ShieldCheck, Lock } from 'lucide-react';
 
 export default function SpecList({ iklan }) {
   if (!iklan) return null;
+
+  const maskImei = (imei) => {
+    if (!imei || imei === '-' || imei === 'Tidak ada') return '-';
+    const clean = String(imei).trim();
+    if (clean.length >= 6) {
+      return clean.slice(0, clean.length - 3) + '•••';
+    }
+    return clean;
+  };
 
   // Daftar baris spesifikasi
   const spesifikasi = [
@@ -16,25 +26,26 @@ export default function SpecList({ iklan }) {
       badgeStyle: getKondisiBadge(iklan.kondisi)
     },
     { 
+      label: 'Kesehatan Baterai', 
+      value: iklan.kesehatan_baterai ? `${iklan.kesehatan_baterai}%` : '-' 
+    },
+    { 
+      label: 'IMEI', 
+      value: maskImei(iklan.imei),
+      isImei: Boolean(iklan.imei && iklan.imei !== '-')
+    },
+    { 
+      label: 'Kelengkapan', 
+      value: iklan.kelengkapan || 'Unit only' 
+    },
+    { 
       label: 'Harga', 
       value: formatRupiah(iklan.harga),
       isHighlight: true 
     },
     { 
-      label: 'Nego', 
+      label: 'Status Nego', 
       value: iklan.harga_negosiasi ? 'Bisa Nego' : 'Harga Pas (Non-Nego)' 
-    },
-    { label: 'Lokasi', value: iklan.lokasi_detail || '-' },
-    { label: 'Kelengkapan', value: iklan.kelengkapan || 'Unit only' },
-    { 
-      label: 'Kesehatan Baterai', 
-      value: iklan.kesehatan_baterai ? `${iklan.kesehatan_baterai}%` : '-' 
-    },
-    { label: 'IMEI', value: iklan.imei || '-' },
-    { 
-      label: 'Kode Verifikasi', 
-      value: iklan.kode_verifikasi, 
-      isMono: true 
     },
   ];
 
@@ -56,7 +67,7 @@ export default function SpecList({ iklan }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-4">
       <h3 className="font-bold text-slate-900 text-base sm:text-lg pb-3 border-b border-slate-100">
-        Spesifikasi Detail
+        Spesifikasi Detail Unit
       </h3>
 
       <div className="divide-y divide-slate-100">
@@ -74,19 +85,18 @@ export default function SpecList({ iklan }) {
                 <span className="text-orange-600 font-bold">
                   {item.value}
                 </span>
-              ) : item.isMono ? (
-                <span className="font-mono bg-slate-100 text-slate-800 px-2 py-0.5 rounded text-xs">
-                  {item.value}
-                </span>
-              ) : (
+              ) : item.isImei ? (
                 <div>
-                  <span>{item.value}</span>
-                  {item.label === 'IMEI' && item.value !== '-' && (
-                    <p className="text-[11px] text-slate-400 font-normal mt-0.5 leading-snug">
-                      Catatan: IMEI ditampilkan untuk verifikasi. Silakan cocokkan saat bertemu penjual.
-                    </p>
-                  )}
+                  <span className="font-mono text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded text-xs tracking-wider inline-flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-slate-500" />
+                    {item.value}
+                  </span>
+                  <p className="text-[11px] text-slate-400 font-normal mt-1 leading-snug">
+                    IMEI dilindungi, lengkap dapat dilihat saat bertemu langsung
+                  </p>
                 </div>
+              ) : (
+                <span>{item.value}</span>
               )}
             </div>
           </div>

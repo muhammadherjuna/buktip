@@ -9,12 +9,13 @@ import {
   Loader2, 
   AlertCircle,
   ShieldCheck,
-  Flag,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MapPin,
+  AlertTriangle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { formatRupiah, formatTanggal, formatWaktuRelatif } from '../lib/utils';
+import { formatRupiah, formatTanggal } from '../lib/utils';
 import FotoBukti from '../components/iklan/FotoBukti';
 import SpecList from '../components/iklan/SpecList';
 import PenjualCard from '../components/iklan/PenjualCard';
@@ -34,19 +35,14 @@ export default function DetailIklan() {
       const sudahDilihat = localStorage.getItem(kunci);
 
       if (!sudahDilihat) {
-        // Jalankan RPC di background secara asinkron tanpa memblokir tampilan
         supabase
           .rpc('tambah_dilihat', { id_iklan: Number(iklanId) })
           .then(() => {
             localStorage.setItem(kunci, 'ya');
           })
-          .catch(() => {
-            // Diam saja jika gagal, jangan tampilkan error ke pengguna
-          });
+          .catch(() => {});
       }
-    } catch (e) {
-      // Abaikan error akses storage
-    }
+    } catch (e) {}
   };
 
   useEffect(() => {
@@ -57,7 +53,6 @@ export default function DetailIklan() {
         setLoading(true);
         setError(null);
 
-        // Kolom sensitif seperti nomor_hp DIBATASI dan tidak diambil secara publik
         const { data, error: fetchError } = await supabase
           .from('iklan')
           .select(`
@@ -74,8 +69,6 @@ export default function DetailIklan() {
         if (isMounted) {
           setIklan(data);
           setFotoAktifIndex(0);
-
-          // Panggil fungsi penambahan jumlah dilihat aman
           tandaiSudahDilihat(id);
         }
       } catch (err) {
@@ -104,12 +97,15 @@ export default function DetailIklan() {
     toast('Fitur favorit segera hadir!');
   };
 
-  // Handler Tombol Laporkan Iklan
+  // Handler Tombol Laporkan Iklan ke Admin WhatsApp
   const handleLaporkan = () => {
-    toast('Fitur laporan akan tersedia segera. Jika mencurigakan, hubungi kami.');
+    if (!iklan) return;
+    const reportMsg = `Laporan Iklan: [Kode: ${iklan.kode_verifikasi || 'KB-XXXX'}] [ID: ${iklan.id}] - ${iklan.merek} ${iklan.tipe}`;
+    const adminWa = `https://wa.me/6281234567890?text=${encodeURIComponent(reportMsg)}`;
+    window.open(adminWa, '_blank');
   };
 
-  // Format nomor WhatsApp aman (menggunakan nomor penjual jika tersedia atau nomor kontak pengujian)
+  // Format nomor WhatsApp aman (hanya tautan aman, tanpa menampilkan angka mentah)
   const getWhatsAppLink = () => {
     if (!iklan) return '#';
     let noHp = iklan.profiles?.nomor_hp || '081234567890';
@@ -120,7 +116,7 @@ export default function DetailIklan() {
       noHp = '62' + noHp;
     }
 
-    const pesan = `Halo, saya tertarik dengan ${iklan.merek} ${iklan.tipe} di Buktip. Apakah masih tersedia?`;
+    const pesan = `Halo, saya tertarik dengan HP ${iklan.merek} ${iklan.tipe} (Kode: ${iklan.kode_verifikasi || ''}) di Buktip. Apakah masih tersedia?`;
     return `https://wa.me/${noHp}?text=${encodeURIComponent(pesan)}`;
   };
 
@@ -196,9 +192,9 @@ export default function DetailIklan() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* ================= KOLOM KIRI (KONTEN UTAMA) ================= */}
-        <div className="lg:col-span-8 space-y-8">
+        <div className="lg:col-span-8 space-y-6">
           
-          {/* A. Galeri Foto */}
+          {/* 1. GALERI FOTO */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-sm space-y-4">
             {/* Foto Utama Besar */}
             <div className="relative w-full max-h-[460px] h-[320px] sm:h-[420px] rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-200 group">
@@ -212,10 +208,17 @@ export default function DetailIklan() {
               />
               
               {/* Badge Terbukti di atas foto */}
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md ring-2 ring-white/90">
-                <ShieldCheck className="w-4 h-4 text-white" />
-                <span>Terbukti Asli</span>
-              </div>
+              {iklan.foto_bukti_kepemilikan_url ? (
+                <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-teal-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md ring-2 ring-white/90">
+                  <ShieldCheck className="w-4 h-4 text-white" />
+                  <span>Terbukti Asli</span>
+                </div>
+              ) : (
+                <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-slate-700/90 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md backdrop-blur-xs">
+                  <AlertCircle className="w-4 h-4 text-slate-300" />
+                  <span>Belum Diverifikasi</span>
+                </div>
+              )}
 
               {/* Indikator Urutan Foto di Pojok Kanan Atas */}
               {semuaFoto.length > 1 && (
@@ -277,24 +280,84 @@ export default function DetailIklan() {
             )}
           </div>
 
-          {/* B. Bagian Bukti Kepemilikan (⭐ Keunggulan Utama) */}
-          <FotoBukti
-            fotoUrl={iklan.foto_bukti_kepemilikan_url}
-            kodeVerifikasi={iklan.kode_verifikasi}
-          />
+          {/* 2. KOTAK KODE VERIFIKASI & LENCANA TERBUKTI ASLI (⭐ DIATAS INFORMASI UTAMA) */}
+          {iklan.foto_bukti_kepemilikan_url ? (
+            <div className="bg-teal-50/90 border border-teal-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
+              <div className="flex items-center gap-2.5 text-teal-900">
+                <div className="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center shadow-xs">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-extrabold tracking-wide uppercase text-teal-950">
+                    Terbukti Asli
+                  </h3>
+                  <p className="text-xs text-teal-800 font-medium">
+                    Penjual telah melampirkan foto bukti kepemilikan fisik dengan kode:
+                  </p>
+                </div>
+              </div>
 
-          {/* C. Deskripsi Lengkap */}
+              <div className="py-2 flex items-center gap-3">
+                <span className="inline-block bg-white text-teal-900 font-mono text-2xl sm:text-3xl font-black px-5 py-2 rounded-2xl border-2 border-teal-300 shadow-sm tracking-wider">
+                  {iklan.kode_verifikasi || 'KB-XXXX'}
+                </span>
+                <span className="text-xs font-semibold text-teal-700 bg-teal-100/80 px-3 py-1 rounded-full">
+                  Cocokkan di Foto
+                </span>
+              </div>
+
+              <p className="text-xs text-teal-800 leading-relaxed font-medium">
+                Cocokkan kode ini dengan kode yang tertulis di foto bukti kepemilikan fisik di bawah.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-slate-100 border border-slate-200 rounded-2xl p-5 shadow-xs flex items-start gap-3.5">
+              <AlertCircle className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                  Belum Diverifikasi
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Iklan ini belum melampirkan foto bukti kepemilikan fisik dengan kode unik.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* 3. LOKASI TITIK TEMU */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-2">
+            <div className="flex items-center gap-2 text-slate-900 font-bold text-base sm:text-lg">
+              <MapPin className="w-5 h-5 text-teal-600 shrink-0" />
+              <h3>Lokasi Titik Temu</h3>
+            </div>
+            <p className="text-sm sm:text-base text-slate-800 font-semibold pt-1">
+              {iklan.lokasi_detail || 'Kebumen, Jawa Tengah'}
+            </p>
+            <p className="text-xs text-slate-400">
+              Disepakati untuk pertemuan dan pengecekan fisik unit secara langsung
+            </p>
+          </div>
+
+          {/* 4. SPESIFIKASI DETAIL (Termasuk IMEI disembunyikan sebagian) */}
+          <SpecList iklan={iklan} />
+
+          {/* 5. DESKRIPSI LENGKAP */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-3">
             <h3 className="font-bold text-slate-900 text-base sm:text-lg pb-3 border-b border-slate-100">
-              Deskripsi Iklan
+              Deskripsi Lengkap
             </h3>
             <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
               {iklan.deskripsi || 'Penjual tidak menyertakan deskripsi tambahan untuk unit ini.'}
             </div>
           </div>
 
-          {/* D. Spesifikasi Detail */}
-          <SpecList iklan={iklan} />
+          {/* 6. BAGIAN FOTO BUKTI KEPEMILIKAN */}
+          {iklan.foto_bukti_kepemilikan_url && (
+            <FotoBukti
+              fotoUrl={iklan.foto_bukti_kepemilikan_url}
+              kodeVerifikasi={iklan.kode_verifikasi}
+            />
+          )}
 
         </div>
 
@@ -324,22 +387,22 @@ export default function DetailIklan() {
 
             {/* Tombol Aksi Utama & Sekunder */}
             <div className="space-y-3 pt-2">
-              {/* Tombol WhatsApp (Aksi Utama - Oranye Menonjol) */}
+              {/* Tombol WhatsApp (Tautan Aman, Tanpa Menampilkan Nomor Mentah) */}
               <a
                 href={getWhatsAppLink()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all text-sm sm:text-base"
+                className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all text-sm sm:text-base cursor-pointer"
               >
                 <MessageCircle className="w-5 h-5" />
-                <span>Hubungi via WhatsApp</span>
+                <span>Hubungi Penjual via WhatsApp</span>
               </a>
 
               {/* Tombol Simpan ke Favorit */}
               <button
                 type="button"
                 onClick={handleFavorit}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 rounded-xl transition text-sm"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 rounded-xl transition text-sm cursor-pointer"
               >
                 <Heart className="w-4 h-4 text-slate-500" />
                 <span>Simpan ke Favorit</span>
@@ -363,9 +426,9 @@ export default function DetailIklan() {
               <button
                 type="button"
                 onClick={handleLaporkan}
-                className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-500 transition-colors py-1"
+                className="inline-flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-semibold transition-colors py-1 cursor-pointer"
               >
-                <Flag className="w-3.5 h-3.5" />
+                <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
                 <span>Laporkan Iklan Ini</span>
               </button>
             </div>
