@@ -1,8 +1,9 @@
 /**
  * Helper Watermark & Kompresi Otomatis Buktip Menggunakan HTML5 Canvas API
- * - Menyesuaikan resolusi maksimal (max 1600px) agar tajam dan ringan (<400KB)
- * - Menerapkan pola watermark tersebar (tiled) berulang 28-30 derajat ke seluruh permukaan foto
- * - Format teks: "Buktip @[NamaPengguna]" (Font 18-20px, ketebalan semi-bold, jarak rapat 100-120px, opacity 30-35%)
+ * Strategi 3 Lapisan Keamanan Elegan & Profesional:
+ * - Lapisan 1: Watermark Strip Horizontal di Bagian Paling Bawah (Latar Hitam 75%, Shield + Buktip + @Username + buktip.id)
+ * - Lapisan 2: Watermark Micro Shield di 4 Pojok Foto (Transparansi 50%)
+ * - Mempertahankan kompresi & resolusi optimal (max 1600px, JPEG ~200-400KB)
  */
 
 export async function applyWatermark(file, username = 'Pengguna') {
@@ -56,48 +57,88 @@ export async function applyWatermark(file, username = 'Pengguna') {
           // 2. Gambar foto asli dengan dimensi yang dioptimasi
           ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-          // 3. Terapkan Watermark Tersebar (Tiled Pattern)
+          // Format nama pengguna
           const cleanUsername = String(username).replace(/^@+/, '').trim() || 'Pengguna';
-          const watermarkText = `Buktip @${cleanUsername}`;
 
-          // Ukuran font tegas & jelas terbaca (18-20px)
-          const fontSize = Math.max(18, Math.min(22, Math.floor(canvas.width * 0.020)));
+          // =========================================================================
+          // LAPISAN 1: WATERMARK STRIP DI BAGIAN PALING BAWAH (UTAMA)
+          // =========================================================================
+          const scale = canvas.width / 800; // Skala proporsional berbasis lebar 800px
+          const stripHeight = Math.max(48, Math.floor(48 * scale));
+          const stripY = canvas.height - stripHeight;
+
+          // Latar belakang strip hitam semi-solid (75% opacity)
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.75)'; // Slate 900 75%
+          ctx.fillRect(0, stripY, canvas.width, stripHeight);
+
+          const centerY = stripY + stripHeight / 2;
+          const paddingX = Math.max(16, Math.floor(16 * scale));
+          const iconSize = Math.max(22, Math.floor(22 * scale));
+
+          // A. Gambar Ikon Perisai di Kiri Strip
+          drawShieldIcon(ctx, paddingX, centerY - iconSize / 2, iconSize, 'rgba(255, 255, 255, 0.95)');
+
+          // B. Teks "Buktip" (Tebal / Semi-Bold 600)
+          const fontSize = Math.max(15, Math.floor(16 * scale));
           ctx.font = `600 ${fontSize}px sans-serif`;
-          ctx.textAlign = 'center';
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
 
-          // Jarak antar watermark lebih rapat (sekitar 100-120px)
-          const stepX = Math.max(120, Math.floor(canvas.width * 0.12));
-          const stepY = Math.max(90, Math.floor(canvas.height * 0.08));
-          const angleRad = -28 * (Math.PI / 180); // Kemiringan 28 derajat
+          const textXBuktip = paddingX + iconSize + Math.max(8, Math.floor(8 * scale));
+          ctx.fillText('Buktip', textXBuktip, centerY);
+          const buktipWidth = ctx.measureText('Buktip').width;
 
-          ctx.save();
+          // C. Teks "@NamaPengguna" (Normal 400, sedikit lebih kecil)
+          const userFontSize = Math.max(13, Math.floor(14 * scale));
+          ctx.font = `400 ${userFontSize}px sans-serif`;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
 
-          // Loop untuk mengisi seluruh permukaan foto secara berulang
-          let rowIndex = 0;
-          for (let y = -stepY; y <= canvas.height + stepY * 2; y += stepY) {
-            const rowOffset = (rowIndex % 2 !== 0) ? (stepX / 2) : 0;
-            for (let x = -stepX; x <= canvas.width + stepX * 2; x += stepX) {
-              ctx.save();
-              ctx.translate(x + rowOffset, y);
-              ctx.rotate(angleRad);
+          const textXUser = textXBuktip + buktipWidth + Math.max(10, Math.floor(10 * scale));
+          const textRightSite = canvas.width - paddingX - Math.floor(80 * scale); // Ruang untuk buktip.id
 
-              // Bayangan halus hitam tipis (16%) agar tegas dan terbaca di latar terang/putih
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
-              ctx.fillText(watermarkText, 1.2, 1.2);
-
-              // Teks putih tegas dengan opasitas 32-35% (jelas terlihat, tidak mengaburkan detail HP)
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.34)';
-              ctx.fillText(watermarkText, 0, 0);
-
-              ctx.restore();
+          // Potong nama pengguna jika terlalu panjang (elipsis)
+          let userText = `@${cleanUsername}`;
+          const maxUserWidth = textRightSite - textXUser - 20;
+          if (maxUserWidth > 40) {
+            while (ctx.measureText(userText).width > maxUserWidth && userText.length > 4) {
+              userText = userText.slice(0, -1);
             }
-            rowIndex++;
+            if (userText !== `@${cleanUsername}`) {
+              userText += '...';
+            }
+            ctx.fillText(userText, textXUser, centerY);
           }
 
-          ctx.restore();
+          // D. Teks "buktip.id" di Kanan Strip
+          const siteFontSize = Math.max(12, Math.floor(13 * scale));
+          ctx.font = `500 ${siteFontSize}px sans-serif`;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.textAlign = 'right';
+          ctx.fillText('buktip.id', canvas.width - paddingX, centerY);
 
-          // 4. Konversi ke File JPEG terkompresi (kualitas 0.82, ukuran <400KB)
+
+          // =========================================================================
+          // LAPISAN 2: WATERMARK KECIL DI 4 POJOK (CADANGAN ANTI-CROP)
+          // =========================================================================
+          const cornerInset = Math.max(15, Math.floor(15 * scale));
+          const cornerIconSize = Math.max(22, Math.floor(22 * scale));
+
+          const cornerPositions = [
+            { x: cornerInset, y: cornerInset }, // Pojok Kiri Atas
+            { x: canvas.width - cornerInset - cornerIconSize, y: cornerInset }, // Pojok Kanan Atas
+            { x: cornerInset, y: stripY - cornerInset - cornerIconSize }, // Pojok Kiri Bawah (Di atas strip)
+            { x: canvas.width - cornerInset - cornerIconSize, y: stripY - cornerInset - cornerIconSize }, // Pojok Kanan Bawah (Di atas strip)
+          ];
+
+          cornerPositions.forEach((pos) => {
+            // Gambar Ikon Perisai Kecil di Pojok (Transparansi 50%)
+            drawShieldIcon(ctx, pos.x, pos.y, cornerIconSize, 'rgba(255, 255, 255, 0.50)');
+          });
+
+          // =========================================================================
+          // 4. KONVERSI KE FILE JPEG TERKOMPRESI (<400KB)
+          // =========================================================================
           canvas.toBlob(
             (blob) => {
               if (blob) {
@@ -115,7 +156,7 @@ export async function applyWatermark(file, username = 'Pengguna') {
             0.82
           );
         } catch (err) {
-          console.warn('Gagal menerapkan watermark tersebar, menggunakan file asli:', err);
+          console.warn('Gagal menerapkan watermark 3 lapisan, menggunakan file asli:', err);
           resolve(file);
         }
       };
@@ -131,4 +172,39 @@ export async function applyWatermark(file, username = 'Pengguna') {
       resolve(file);
     }
   });
+}
+
+/**
+ * Helper menggambar Ikon Perisai Vektor Vektor Presisi pada Canvas
+ */
+function drawShieldIcon(ctx, x, y, size, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  const scale = size / 24;
+  ctx.scale(scale, scale);
+
+  // Perisai Luar
+  ctx.beginPath();
+  ctx.moveTo(12, 2);
+  ctx.lineTo(20, 5);
+  ctx.lineTo(20, 11);
+  ctx.bezierCurveTo(20, 16.5, 16.5, 20.5, 12, 22);
+  ctx.bezierCurveTo(7.5, 20.5, 4, 16.5, 4, 11);
+  ctx.lineTo(4, 5);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // Tanda Centang / Huruf b di dalam perisai
+  ctx.beginPath();
+  ctx.moveTo(8.5, 11.5);
+  ctx.lineTo(11, 14);
+  ctx.lineTo(15.5, 9);
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.75)';
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  ctx.restore();
 }

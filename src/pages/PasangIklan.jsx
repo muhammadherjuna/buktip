@@ -246,10 +246,14 @@ export default function PasangIklan() {
     }
   };
 
-  // Helper Unggah File ke Supabase Storage
+  // Helper Unggah File ke Supabase Storage (Format Nama Jejak Digital: buktip_{prefix}_{username}_{timestamp}.jpg)
   const uploadSingleFile = async (file, prefix) => {
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const path = `${user.id}/${Date.now()}_${prefix}_${sanitizedName}`;
+    const cleanUsername = String(profile?.nama_lengkap || user?.email?.split('@')[0] || 'pengguna')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+    const timestamp = Math.floor(Date.now() / 1000);
+    const fileName = `buktip_${prefix}_${cleanUsername}_${timestamp}.jpg`;
+    const path = `${user.id}/${fileName}`;
 
     const { data, error } = await supabase.storage
       .from('foto_iklan')
