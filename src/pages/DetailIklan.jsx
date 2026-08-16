@@ -28,21 +28,30 @@ export default function DetailIklan() {
   const [error, setError] = useState(null);
   const [fotoAktifIndex, setFotoAktifIndex] = useState(0);
 
-  // Fungsi menandai sudah dilihat berbasis hari di localStorage (Anti Manipulasi)
-  const tandaiSudahDilihat = (iklanId) => {
+  // Fungsi menandai sudah dilihat berbasis hari di localStorage (Anti Manipulasi & Realtime Update)
+  const tandaiSudahDilihat = async (iklanId) => {
     try {
       const kunci = `dilihat_iklan_${iklanId}_${new Date().toISOString().slice(0, 10)}`;
       const sudahDilihat = localStorage.getItem(kunci);
 
       if (!sudahDilihat) {
-        supabase
-          .rpc('tambah_dilihat', { id_iklan: Number(iklanId) })
-          .then(() => {
-            localStorage.setItem(kunci, 'ya');
-          })
-          .catch(() => {});
+        const { data: counterBaru, error } = await supabase.rpc('tambah_dilihat', { id_iklan: Number(iklanId) });
+
+        if (!error) {
+          localStorage.setItem(kunci, 'ya');
+          // Update state UI secara realtime seketika
+          setIklan((prev) => {
+            if (!prev) return prev;
+            const count = counterBaru !== undefined && counterBaru !== null ? Number(counterBaru) : (Number(prev.jumlah_dilihat) || 0) + 1;
+            return { ...prev, jumlah_dilihat: count };
+          });
+        } else {
+          console.warn('Gagal memanggil RPC tambah_dilihat:', error.message);
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Peringatan saat update jumlah dilihat:', e);
+    }
   };
 
   useEffect(() => {
