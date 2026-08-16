@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Upload, 
-  Image as ImageIcon, 
   Camera, 
   Trash2, 
   Plus, 
@@ -21,6 +20,12 @@ import toast from 'react-hot-toast';
 export default function PasangIklan() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+
+  // Generate kode verifikasi unik di frontend saat form dibuka (STABIL)
+  const [kodeVerifikasi] = useState(() => {
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `KB-${randomNum}`;
+  });
 
   // State Form
   const [merek, setMerek] = useState('Apple');
@@ -160,29 +165,12 @@ export default function PasangIklan() {
 
     try {
       setIsSubmitting(true);
-      setUploadProgress('Menyiapkan kode verifikasi...');
 
-      // 1. Dapatkan Kode Verifikasi Unik Otomatis
-      let kodeVerifikasi = '';
-      try {
-        const { data: generatedCode, error: rpcError } = await supabase.rpc('generate_kode_verifikasi');
-        if (!rpcError && generatedCode) {
-          kodeVerifikasi = generatedCode;
-        }
-      } catch (err) {
-        console.warn('RPC generate_kode_verifikasi gagal, menggunakan fallback:', err);
-      }
-
-      if (!kodeVerifikasi) {
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        kodeVerifikasi = `KB-${randomNum}`;
-      }
-
-      // 2. Unggah Foto Utama
+      // 1. Unggah Foto Utama
       setUploadProgress('Mengunggah foto utama...');
       const fotoUtamaUrl = await uploadSingleFile(fotoUtamaFile, 'utama');
 
-      // 3. Unggah Foto Tambahan jika ada
+      // 2. Unggah Foto Tambahan jika ada
       const fotoLainUrls = [];
       if (fotoTambahanFiles.length > 0) {
         setUploadProgress(`Mengunggah ${fotoTambahanFiles.length} foto tambahan...`);
@@ -192,11 +180,11 @@ export default function PasangIklan() {
         }
       }
 
-      // 4. Unggah Foto Bukti Kepemilikan
+      // 3. Unggah Foto Bukti Kepemilikan
       setUploadProgress('Mengunggah foto bukti kepemilikan...');
       const fotoBuktiUrl = await uploadSingleFile(fotoBuktiFile, 'bukti');
 
-      // 5. Simpan Data ke Tabel Iklan
+      // 4. Simpan Data ke Tabel Iklan dengan kodeVerifikasi dari frontend
       setUploadProgress('Menyimpan data iklan...');
       const payloadIklan = {
         penjual_id: user.id,
@@ -239,6 +227,7 @@ export default function PasangIklan() {
           kodeVerifikasi,
           merek,
           tipe: tipe.trim(),
+          harga: Math.round(Number(harga)),
         },
       });
 
@@ -284,13 +273,15 @@ export default function PasangIklan() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {/* Merek */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="merek" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Merek Smartphone <span className="text-red-500">*</span>
               </label>
               <select
+                id="merek"
+                name="merek"
                 value={merek}
                 onChange={(e) => setMerek(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition cursor-pointer"
               >
                 <option value="Apple">Apple</option>
                 <option value="Samsung">Samsung</option>
@@ -308,10 +299,12 @@ export default function PasangIklan() {
 
             {/* Tipe HP */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="tipe" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Tipe / Model HP <span className="text-red-500">*</span>
               </label>
               <input
+                id="tipe"
+                name="tipe"
                 type="text"
                 placeholder="Contoh: iPhone 13 Pro, Galaxy S22"
                 value={tipe}
@@ -323,13 +316,15 @@ export default function PasangIklan() {
 
             {/* Kapasitas */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="kapasitas" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Kapasitas Penyimpanan
               </label>
               <select
+                id="kapasitas"
+                name="kapasitas"
                 value={kapasitas}
                 onChange={(e) => setKapasitas(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition cursor-pointer"
               >
                 <option value="32 GB">32 GB</option>
                 <option value="64 GB">64 GB</option>
@@ -343,10 +338,12 @@ export default function PasangIklan() {
 
             {/* Warna */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="warna" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Warna Bodi
               </label>
               <input
+                id="warna"
+                name="warna"
                 type="text"
                 placeholder="Contoh: Sierra Blue, Phantom Black"
                 value={warna}
@@ -357,13 +354,15 @@ export default function PasangIklan() {
 
             {/* Kondisi */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="kondisi" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Kondisi Fisik & Fungsi <span className="text-red-500">*</span>
               </label>
               <select
+                id="kondisi"
+                name="kondisi"
                 value={kondisi}
-                onChange={(e) => setKondiisi(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                onChange={(e) => setKondisi(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition cursor-pointer"
               >
                 <option value="Sangat Baik">Sangat Baik (Mulus 95-99%, fungsi normal)</option>
                 <option value="Baik">Baik (Pemakaian wajar, bodi lecet halus)</option>
@@ -374,10 +373,12 @@ export default function PasangIklan() {
 
             {/* Harga */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="harga" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Harga Jual (Rp) <span className="text-red-500">*</span>
               </label>
               <input
+                id="harga"
+                name="harga"
                 type="number"
                 placeholder="Contoh: 4500000"
                 value={harga}
@@ -458,10 +459,12 @@ export default function PasangIklan() {
 
             {/* Lokasi Detail */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="lokasi_detail" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Lokasi Detail / Titik Temu <span className="text-red-500">*</span>
               </label>
               <input
+                id="lokasi_detail"
+                name="lokasi_detail"
                 type="text"
                 placeholder="Contoh: Kebumen Kota, dekat Alun-alun"
                 value={lokasiDetail}
@@ -473,10 +476,12 @@ export default function PasangIklan() {
 
             {/* Kelengkapan */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="kelengkapan" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Kelengkapan Unit
               </label>
               <input
+                id="kelengkapan"
+                name="kelengkapan"
                 type="text"
                 placeholder="Contoh: Fullset original (Dus + Kabel Type-C)"
                 value={kelengkapan}
@@ -487,10 +492,12 @@ export default function PasangIklan() {
 
             {/* Kesehatan Baterai */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="kesehatan_baterai" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Kesehatan Baterai (Battery Health %)
               </label>
               <input
+                id="kesehatan_baterai"
+                name="kesehatan_baterai"
                 type="number"
                 placeholder="Contoh: 88"
                 min="0"
@@ -503,10 +510,12 @@ export default function PasangIklan() {
 
             {/* IMEI */}
             <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="imei" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Nomor IMEI (15 Digit)
               </label>
               <input
+                id="imei"
+                name="imei"
                 type="text"
                 placeholder="Contoh: 352093847291823"
                 maxLength="15"
@@ -521,10 +530,12 @@ export default function PasangIklan() {
 
             {/* Deskripsi */}
             <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label htmlFor="deskripsi" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Deskripsi Lengkap
               </label>
               <textarea
+                id="deskripsi"
+                name="deskripsi"
                 rows="4"
                 placeholder="Jelaskan kondisi unit secara jujur: riwayat pemakaian, minus fisik, kelengkapan, garansi, dll."
                 value={deskripsi}
@@ -535,7 +546,7 @@ export default function PasangIklan() {
           </div>
         </section>
 
-        {/* ================= BAGIAN 3: FOTO BARANG (⭐ PENTING) ================= */}
+        {/* ================= BAGIAN 3: FOTO BARANG & BUKTI (⭐ INTI BUKTIP) ================= */}
         <section className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-6">
           <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
             <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center font-bold text-sm">
@@ -643,8 +654,8 @@ export default function PasangIklan() {
               </div>
             </div>
 
-            {/* ⭐ FOTO BUKTI KEPEMILIKAN (Wajib) */}
-            <div className="space-y-3 pt-4 border-t border-slate-100">
+            {/* ⭐ FOTO BUKTI KEPEMILIKAN DENGAN KODE VERIFIKASI SEBELUM UNGGAH */}
+            <div className="space-y-4 pt-4 border-t border-slate-100">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-600" />
                 <label className="text-sm font-bold text-slate-900">
@@ -652,17 +663,45 @@ export default function PasangIklan() {
                 </label>
               </div>
 
-              {/* Info Card Petunjuk Verifikasi */}
-              <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-4 space-y-1.5">
-                <p className="text-xs font-semibold text-emerald-900 flex items-center gap-1.5">
-                  <Info className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Petunjuk Foto Bukti Kepemilikan:</span>
-                </p>
-                <p className="text-xs text-emerald-800 leading-relaxed pl-5.5">
-                  Foto HP yang menampilkan layar dengan kode verifikasi yang akan muncul setelah iklan disimpan. Anda juga dapat mengunggah foto unit bersama kertas bertuliskan nama Anda terlebih dahulu.
-                </p>
+              {/* Banner Petunjuk & Tampilan Kode Verifikasi */}
+              <div className="bg-emerald-50/90 border-2 border-emerald-200 rounded-2xl p-5 sm:p-6 space-y-4">
+                {/* Tampilan Kode Verifikasi Besar */}
+                <div className="bg-white rounded-xl border border-emerald-300 p-4 text-center shadow-xs space-y-1">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                    Kode Verifikasi Anda:
+                  </span>
+                  <div className="text-3xl sm:text-4xl font-mono font-black text-teal-600 tracking-widest py-1">
+                    {kodeVerifikasi}
+                  </div>
+                  <span className="text-[11px] text-slate-400 block">
+                    Gunakan kode unik di atas untuk mengambil foto bukti kepemilikan
+                  </span>
+                </div>
+
+                {/* Cara Membuat Foto Bukti */}
+                <div className="space-y-2 text-xs sm:text-sm text-emerald-950">
+                  <p className="font-bold text-emerald-900 flex items-center gap-1.5">
+                    <Info className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Cara membuat foto bukti:</span>
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1.5 text-emerald-900 pl-1 leading-relaxed">
+                    <li>
+                      Buka halaman ini di HP yang akan dijual, atau tulis kode di atas di selembar kertas
+                    </li>
+                    <li>
+                      Letakkan kertas / letakkan HP yang menampilkan kode di samping unit HP
+                    </li>
+                    <li>
+                      Foto keduanya dalam satu bingkai sehingga kode terlihat jelas
+                    </li>
+                    <li>
+                      Unggah foto hasilnya di bawah ini
+                    </li>
+                  </ol>
+                </div>
               </div>
 
+              {/* Kotak Unggah Foto Bukti Kepemilikan */}
               {fotoBuktiPreview ? (
                 <div className="relative w-full max-w-sm aspect-[4/3] rounded-2xl overflow-hidden border-2 border-emerald-500 group bg-slate-100">
                   <img
@@ -670,8 +709,8 @@ export default function PasangIklan() {
                     alt="Pratinjau Foto Bukti"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute bottom-2 left-2 bg-emerald-600 text-white text-[11px] font-bold px-2 py-0.5 rounded shadow-sm">
-                    Foto Bukti Terpasang
+                  <div className="absolute bottom-2 left-2 bg-emerald-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-sm">
+                    Foto Bukti Terpasang ({kodeVerifikasi})
                   </div>
                   <button
                     type="button"
@@ -685,7 +724,7 @@ export default function PasangIklan() {
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full max-w-sm aspect-[4/3] border-2 border-dashed border-emerald-300 bg-emerald-50/20 rounded-2xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50/40 transition p-6 text-center">
+                <label className="flex flex-col items-center justify-center w-full max-w-sm aspect-[4/3] border-2 border-dashed border-emerald-400 bg-emerald-50/20 rounded-2xl cursor-pointer hover:border-emerald-600 hover:bg-emerald-50/40 transition p-6 text-center">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3 shadow-xs">
                     <Camera className="w-6 h-6" />
                   </div>
