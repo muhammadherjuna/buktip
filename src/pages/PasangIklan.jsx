@@ -21,11 +21,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { formatRupiah } from '../lib/utils';
 import { applyWatermark } from '../lib/watermark';
+import ModalConfirm from '../components/common/ModalConfirm';
 import toast from 'react-hot-toast';
 
 export default function PasangIklan() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+
+  // State Modal Konfirmasi Profesional
+  const [showModalGantiKode, setShowModalGantiKode] = useState(false);
+  const [showModalResetDraft, setShowModalResetDraft] = useState(false);
 
   // Kode verifikasi STABIL disimpan di localStorage
   const [kodeVerifikasi, setKodeVerifikasi] = useState(() => {
@@ -42,25 +47,21 @@ export default function PasangIklan() {
     return newCode;
   });
 
-  // Handler Ganti Kode Verifikasi Baru
-  const handleGantiKode = () => {
-    const konfirmasi = window.confirm(
-      'Yakin ganti kode? Foto bukti yang sudah dibuat dengan kode lama tidak akan cocok.'
-    );
-    if (konfirmasi) {
-      const newCode = `KB-${Math.floor(1000 + Math.random() * 9000)}`;
-      setKodeVerifikasi(newCode);
-      try {
-        localStorage.setItem('buktip_kode_verifikasi', newCode);
-      } catch (_) {}
+  // Konfirmasi Eksekusi Ganti Kode Verifikasi Baru
+  const handleConfirmGantiKode = () => {
+    setShowModalGantiKode(false);
+    const newCode = `KB-${Math.floor(1000 + Math.random() * 9000)}`;
+    setKodeVerifikasi(newCode);
+    try {
+      localStorage.setItem('buktip_kode_verifikasi', newCode);
+    } catch (_) {}
 
-      if (fotoBuktiFile || fotoBuktiPreview) {
-        setFotoBuktiFile(null);
-        setFotoBuktiPreview(null);
-        toast('Kode diganti. Silakan foto ulang dengan kode baru ini.');
-      } else {
-        toast.success('Kode verifikasi baru berhasil dibuat!');
-      }
+    if (fotoBuktiFile || fotoBuktiPreview) {
+      setFotoBuktiFile(null);
+      setFotoBuktiPreview(null);
+      toast('Kode diganti. Silakan foto ulang dengan kode baru ini.');
+    } else {
+      toast.success('Kode verifikasi baru berhasil dibuat!');
     }
   };
 
@@ -123,33 +124,36 @@ export default function PasangIklan() {
     kesehatanBaterai,
   ]);
 
-  // Handler Hapus Draft / Bersihkan Form jika pengguna ingin mulai dari awal
-  const handleResetDraft = () => {
-    const konfirmasi = window.confirm('Apakah Anda yakin ingin menghapus draft dan mengosongkan seluruh formulir?');
-    if (konfirmasi) {
-      try {
-        localStorage.removeItem('buktip_draft_iklan');
-      } catch (_) {}
-      setMerek('Apple');
-      setTipe('');
-      setKapasitas('128 GB');
-      setWarna('');
-      setKondisi('Sangat Baik');
-      setHarga('');
-      setBisaNego(true);
-      setLokasiDetail('');
-      setKelengkapan('');
-      setDeskripsi('');
-      setImei('');
-      setKesehatanBaterai('');
-      setFotoUtamaFile(null);
-      setFotoUtamaPreview(null);
-      setFotoTambahanFiles([]);
-      setFotoTambahanPreviews([]);
-      setFotoBuktiFile(null);
-      setFotoBuktiPreview(null);
-      toast.success('Draft formulir berhasil dibersihkan.');
-    }
+  // Handler Buka Modal Hapus Draft
+  const handleOpenResetDraft = () => {
+    setShowModalResetDraft(true);
+  };
+
+  // Konfirmasi Eksekusi Hapus Draft
+  const handleConfirmResetDraft = () => {
+    setShowModalResetDraft(false);
+    try {
+      localStorage.removeItem('buktip_draft_iklan');
+    } catch (_) {}
+    setMerek('Apple');
+    setTipe('');
+    setKapasitas('128 GB');
+    setWarna('');
+    setKondisi('Sangat Baik');
+    setHarga('');
+    setBisaNego(true);
+    setLokasiDetail('');
+    setKelengkapan('');
+    setDeskripsi('');
+    setImei('');
+    setKesehatanBaterai('');
+    setFotoUtamaFile(null);
+    setFotoUtamaPreview(null);
+    setFotoTambahanFiles([]);
+    setFotoTambahanPreviews([]);
+    setFotoBuktiFile(null);
+    setFotoBuktiPreview(null);
+    toast.success('Draft formulir berhasil dibersihkan.');
   };
 
   // State File Foto
@@ -422,7 +426,7 @@ export default function PasangIklan() {
         {(tipe || harga || lokasiDetail || deskripsi) && (
           <button
             type="button"
-            onClick={handleResetDraft}
+            onClick={handleOpenResetDraft}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-xl transition cursor-pointer self-start sm:self-center"
             title="Kosongkan seluruh isian formulir"
           >
@@ -947,7 +951,7 @@ export default function PasangIklan() {
                     </span>
                     <button
                       type="button"
-                      onClick={handleGantiKode}
+                      onClick={() => setShowModalGantiKode(true)}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg transition cursor-pointer"
                       title="Generate kode verifikasi baru"
                     >
@@ -1107,6 +1111,30 @@ export default function PasangIklan() {
         </div>
 
       </form>
+
+      {/* Modal Konfirmasi Ganti Kode Verifikasi */}
+      <ModalConfirm
+        isOpen={showModalGantiKode}
+        onClose={() => setShowModalGantiKode(false)}
+        onConfirm={handleConfirmGantiKode}
+        type="warning"
+        title="Ganti Kode Verifikasi?"
+        message="Kode verifikasi baru akan dibuat. Jika Anda sudah mengambil foto bukti dengan kode lama, foto tersebut tidak akan cocok dan perlu difoto ulang."
+        confirmText="Ya, Buat Kode Baru"
+        cancelText="Batalkan"
+      />
+
+      {/* Modal Konfirmasi Reset Formulir / Hapus Draft */}
+      <ModalConfirm
+        isOpen={showModalResetDraft}
+        onClose={() => setShowModalResetDraft(false)}
+        onConfirm={handleConfirmResetDraft}
+        type="danger"
+        title="Kosongkan Seluruh Formulir?"
+        message="Tindakan ini akan menghapus draft isian Anda dan mengembalikan seluruh kolom formulir ke kondisi awal. Anda yakin ingin melanjutkan?"
+        confirmText="Ya, Kosongkan Form"
+        cancelText="Batal"
+      />
     </div>
   );
 }
