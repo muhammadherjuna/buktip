@@ -188,7 +188,80 @@ export default function Beranda() {
   return (
     <div className="space-y-12 sm:space-y-16 py-2">
       
-      {/* ================= FITUR 1: BANNER KEPERCAYAAN DI ATAS BERANDA ================= */}
+      {/* ================= 1. HERO SECTION UTAMA (PALING ATAS) ================= */}
+      <section className="bg-gradient-to-br from-teal-50/80 via-slate-50 to-white border border-teal-100/80 rounded-3xl p-6 sm:p-10 lg:p-12 shadow-xs relative overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+          
+          {/* Kolom Kiri: Teks & CTA */}
+          <div className="lg:col-span-7 space-y-5 text-left">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-teal-100/80 border border-teal-200 text-teal-800 text-xs font-semibold">
+              <ShieldCheck className="w-4 h-4 text-teal-600" />
+              <span>Platform Terverifikasi Foto Kepemilikan</span>
+            </div>
+
+            <h1 className="font-serif font-black text-3xl sm:text-4xl md:text-5xl text-slate-900 leading-tight tracking-tight">
+              Jual Beli HP Bekas Tanpa Takut Foto Curian
+            </h1>
+
+            <p className="text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed max-w-xl">
+              Setiap iklan di Buktip wajib menyertakan foto bukti kepemilikan dengan kode unik. Anda tahu barang asli, bukan foto hasil curian dari internet.
+            </p>
+
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <Link
+                to="/pasang-iklan"
+                className="px-6 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm sm:text-base rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <PlusCircle className="w-5 h-5" />
+                <span>Pasang Iklan Sekarang</span>
+              </Link>
+              <Link
+                to="/semua-iklan"
+                className="px-6 py-3.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-sm sm:text-base rounded-2xl border border-slate-200 shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Search className="w-4.5 h-4.5 text-slate-500" />
+                <span>Cari HP Bekas</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Kolom Kanan: Ilustrasi Kartu Bukti Kepemilikan */}
+          <div className="lg:col-span-5 flex justify-center">
+            <div className="relative w-full max-w-sm bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xl space-y-3 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+              <div className="relative aspect-[4/3] bg-slate-900 rounded-2xl overflow-hidden border border-slate-200">
+                <img
+                  src="/images/contoh-bukti-benar.jpg"
+                  alt="Ilustrasi HP dengan Kode Verifikasi"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://picsum.photos/seed/buktip-hero/400/300';
+                  }}
+                />
+                <div className="absolute top-3 left-3 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Terbukti Asli</span>
+                </div>
+                <div className="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-mono px-2 py-0.5 rounded border border-white/20">
+                  Kode: KB-3221
+                </div>
+              </div>
+              <div className="p-1 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 text-sm">iPhone 13 128GB</span>
+                  <span className="font-extrabold text-teal-600 text-sm">Rp 7.850.000</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span>Kebumen, Jawa Tengah</span>
+                  <span className="text-emerald-700 font-medium">Foto fisik terverifikasi</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ================= 2. BANNER 4 KEPERCAYAAN (DI BAWAH HERO) ================= */}
       <section className="bg-slate-50 border border-slate-200/90 rounded-3xl p-4 sm:p-5 shadow-xs">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-center">
           
@@ -243,7 +316,7 @@ export default function Beranda() {
         </div>
       </section>
 
-      {/* ================= FITUR 2: 3 TOMBOL AKSI CEPAT ================= */}
+      {/* ================= 3. 3 TOMBOL AKSI CEPAT ================= */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
         {/* Tombol 1: Pasang Iklan (Oranye Menonjol) */}
@@ -302,80 +375,7 @@ export default function Beranda() {
 
       </section>
 
-      {/* ================= HERO SECTION UTAMA ================= */}
-      <section className="bg-gradient-to-br from-teal-50/80 via-slate-50 to-white border border-teal-100/80 rounded-3xl p-6 sm:p-10 lg:p-12 shadow-xs relative overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-          
-          {/* Kolom Kiri: Teks */}
-          <div className="lg:col-span-7 space-y-5 text-left">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-teal-100/80 border border-teal-200 text-teal-800 text-xs font-semibold">
-              <ShieldCheck className="w-4 h-4 text-teal-600" />
-              <span>Platform Terverifikasi Foto Kepemilikan</span>
-            </div>
-
-            <h1 className="font-serif font-black text-3xl sm:text-4xl md:text-5xl text-slate-900 leading-tight tracking-tight">
-              Jual Beli HP Bekas Tanpa Takut Foto Curian
-            </h1>
-
-            <p className="text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed max-w-xl">
-              Setiap iklan di Buktip wajib menyertakan foto bukti kepemilikan dengan kode unik. Anda tahu barang asli, bukan foto hasil curian dari internet.
-            </p>
-
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <Link
-                to="/pasang-iklan"
-                className="px-6 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm sm:text-base rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <PlusCircle className="w-5 h-5" />
-                <span>Pasang Iklan Sekarang</span>
-              </Link>
-              <a
-                href="#daftar-iklan"
-                className="px-6 py-3.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-sm sm:text-base rounded-2xl border border-slate-200 shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Search className="w-4.5 h-4.5 text-slate-500" />
-                <span>Lihat Daftar HP</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Kolom Kanan: Ilustrasi Kartu Bukti Kepemilikan */}
-          <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-full max-w-sm bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xl space-y-3 transform rotate-1 hover:rotate-0 transition-transform duration-300">
-              <div className="relative aspect-[4/3] bg-slate-900 rounded-2xl overflow-hidden border border-slate-200">
-                <img
-                  src="/images/contoh-bukti-benar.jpg"
-                  alt="Ilustrasi HP dengan Kode Verifikasi"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://picsum.photos/seed/buktip-hero/400/300';
-                  }}
-                />
-                <div className="absolute top-3 left-3 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Terbukti Asli</span>
-                </div>
-                <div className="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-mono px-2 py-0.5 rounded border border-white/20">
-                  Kode: KB-3221
-                </div>
-              </div>
-              <div className="p-1 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-900 text-sm">iPhone 13 128GB</span>
-                  <span className="font-extrabold text-teal-600 text-sm">Rp 7.850.000</span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>Kebumen, Jawa Tengah</span>
-                  <span className="text-emerald-700 font-medium">Foto fisik terverifikasi</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ================= FITUR 4: SECTION MEREK UNGGULAN (LINGKARAN BERSIH) ================= */}
+      {/* ================= 4. SECTION MEREK UNGGULAN ================= */}
       <section className="space-y-6">
         <div className="text-center space-y-1">
           <h2 className="font-serif font-bold text-2xl sm:text-3xl text-slate-900">
