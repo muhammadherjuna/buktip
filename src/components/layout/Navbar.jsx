@@ -79,6 +79,15 @@ export default function Navbar() {
             </Link>
             
             <Link 
+              to="/favorit" 
+              className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-red-500 transition"
+              title="Iklan Favorit"
+            >
+              <Heart className="w-4 h-4 text-red-500" />
+              <span>Favorit</span>
+            </Link>
+            
+            <Link 
               to="/pasang-iklan" 
               className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 rounded-lg shadow-sm transition"
             >
