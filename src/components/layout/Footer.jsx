@@ -81,13 +81,18 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2 text-xs sm:text-sm text-slate-600 font-medium">
               <li>
-                <Link to="/tentang" className="hover:text-teal-600 transition-colors">
-                  Cara Kerja
+                <Link to="/kenapa-buktip" className="hover:text-teal-600 transition-colors">
+                  Kenapa Buktip?
                 </Link>
               </li>
               <li>
                 <Link to="/tentang" className="hover:text-teal-600 transition-colors">
-                  Tips Aman Bertransaksi
+                  Cara Kerja Verifikasi
+                </Link>
+              </li>
+              <li>
+                <Link to="/semua-iklan" className="hover:text-teal-600 transition-colors">
+                  Katalog HP Bekas
                 </Link>
               </li>
               <li>

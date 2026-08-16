@@ -15,6 +15,7 @@ import IklanSaya from './pages/IklanSaya';
 import Favorit from './pages/Favorit';
 import Tentang from './pages/Tentang';
 import SemuaIklan from './pages/SemuaIklan';
+import KenapaBuktip from './pages/KenapaBuktip';
 
 const router = createBrowserRouter([
   {
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
       {
         path: 'semua-iklan',
         element: <SemuaIklan />,
+      },
+      {
+        path: 'kenapa-buktip',
+        element: <KenapaBuktip />,
       },
       {
         path: 'iklan/:id',

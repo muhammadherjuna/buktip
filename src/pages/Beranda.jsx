@@ -355,9 +355,9 @@ export default function Beranda() {
           </div>
         </Link>
 
-        {/* Tombol 3: Cara Kerja (Slate Outline) */}
+        {/* Tombol 3: Kenapa Buktip? (Slate Outline) */}
         <Link
-          to="/tentang"
+          to="/kenapa-buktip"
           className="group bg-white hover:bg-slate-100/70 border-2 border-slate-200 hover:border-slate-300 text-slate-900 rounded-3xl p-5 sm:p-6 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-4 cursor-pointer"
         >
           <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -365,10 +365,10 @@ export default function Beranda() {
           </div>
           <div className="space-y-0.5 text-left">
             <h3 className="font-extrabold text-base sm:text-lg leading-snug">
-              Cara Kerja Verifikasi
+              Kenapa Buktip?
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Kenapa anti-foto curian bekerja
+              6 alasan sistem verifikasi kami lebih aman
             </p>
           </div>
         </Link>
