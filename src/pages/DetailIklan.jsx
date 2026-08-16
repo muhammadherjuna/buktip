@@ -9,7 +9,9 @@ import {
   Loader2, 
   AlertCircle,
   ShieldCheck,
-  Flag 
+  Flag,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatRupiah, formatTanggal, formatWaktuRelatif } from '../lib/utils';
@@ -23,7 +25,7 @@ export default function DetailIklan() {
   const [iklan, setIklan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [fotoAktif, setFotoAktif] = useState(null);
+  const [fotoAktifIndex, setFotoAktifIndex] = useState(0);
 
   // Fungsi menandai sudah dilihat berbasis hari di localStorage (Anti Manipulasi)
   const tandaiSudahDilihat = (iklanId) => {
@@ -60,7 +62,7 @@ export default function DetailIklan() {
           .from('iklan')
           .select(`
             *,
-            profiles (nama_lengkap, skor_kepercayaan, total_transaksi_sukses, foto_profil, daerah_id)
+            profiles (nama_lengkap, nomor_hp, skor_kepercayaan, total_transaksi_sukses, foto_profil, daerah_id)
           `)
           .eq('id', id)
           .single();
@@ -71,7 +73,7 @@ export default function DetailIklan() {
 
         if (isMounted) {
           setIklan(data);
-          setFotoAktif(data.foto_utama_url);
+          setFotoAktifIndex(0);
 
           // Panggil fungsi penambahan jumlah dilihat aman
           tandaiSudahDilihat(id);
@@ -156,14 +158,26 @@ export default function DetailIklan() {
     );
   }
 
-  // Gabungkan semua foto untuk thumbnail galeri
+  // Gabungkan semua foto untuk galeri (foto utama + foto lain)
   const semuaFoto = [
     iklan.foto_utama_url,
     ...(Array.isArray(iklan.foto_lain_urls) ? iklan.foto_lain_urls : [])
   ].filter(Boolean);
 
   const fallbackUtama = `https://picsum.photos/seed/${iklan.id || 'buktip-detail'}/800/600`;
-  const urlTampil = fotoAktif || iklan.foto_utama_url || fallbackUtama;
+  const urlTampil = semuaFoto[fotoAktifIndex] || iklan.foto_utama_url || fallbackUtama;
+
+  const handlePrevFoto = () => {
+    if (fotoAktifIndex > 0) {
+      setFotoAktifIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleNextFoto = () => {
+    if (fotoAktifIndex < semuaFoto.length - 1) {
+      setFotoAktifIndex((prev) => prev + 1);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -187,21 +201,52 @@ export default function DetailIklan() {
           {/* A. Galeri Foto */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-sm space-y-4">
             {/* Foto Utama Besar */}
-            <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 border border-slate-100">
+            <div className="relative w-full max-h-[460px] h-[320px] sm:h-[420px] rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-200 group">
               <img
                 src={urlTampil}
                 alt={`${iklan.merek} ${iklan.tipe}`}
-                className="w-full h-full object-cover transition duration-300"
+                className="w-full h-full object-contain transition duration-300 select-none"
                 onError={(e) => {
                   e.currentTarget.src = fallbackUtama;
                 }}
               />
               
               {/* Badge Terbukti di atas foto */}
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md ring-2 ring-white">
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md ring-2 ring-white/90">
                 <ShieldCheck className="w-4 h-4 text-white" />
                 <span>Terbukti Asli</span>
               </div>
+
+              {/* Indikator Urutan Foto di Pojok Kanan Atas */}
+              {semuaFoto.length > 1 && (
+                <div className="absolute top-3 right-3 bg-slate-900/75 backdrop-blur-xs text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md border border-white/10">
+                  {fotoAktifIndex + 1} / {semuaFoto.length}
+                </div>
+              )}
+
+              {/* Tombol Panah Kiri */}
+              {semuaFoto.length > 1 && fotoAktifIndex > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePrevFoto}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center shadow-lg backdrop-blur-xs transition cursor-pointer border border-white/20"
+                  aria-label="Foto Sebelumnya"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+
+              {/* Tombol Panah Kanan */}
+              {semuaFoto.length > 1 && fotoAktifIndex < semuaFoto.length - 1 && (
+                <button
+                  type="button"
+                  onClick={handleNextFoto}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center shadow-lg backdrop-blur-xs transition cursor-pointer border border-white/20"
+                  aria-label="Foto Berikutnya"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
             </div>
 
             {/* Thumbnail Selector jika ada lebih dari 1 foto */}
@@ -211,11 +256,11 @@ export default function DetailIklan() {
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setFotoAktif(foto)}
-                    className={`relative w-20 h-16 rounded-lg overflow-hidden border-2 transition shrink-0 ${
-                      fotoAktif === foto 
+                    onClick={() => setFotoAktifIndex(idx)}
+                    className={`relative w-20 h-16 rounded-lg overflow-hidden border-2 transition shrink-0 bg-slate-100 cursor-pointer ${
+                      fotoAktifIndex === idx 
                         ? 'border-teal-600 ring-2 ring-teal-200' 
-                        : 'border-slate-200 hover:border-slate-300 opacity-75 hover:opacity-100'
+                        : 'border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100'
                     }`}
                   >
                     <img

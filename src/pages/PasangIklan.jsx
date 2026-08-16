@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Upload, 
   Camera, 
@@ -9,12 +9,16 @@ import {
   Info, 
   Loader2, 
   Smartphone, 
-  MapPin, 
-  FileText 
+  CheckCircle2, 
+  XCircle, 
+  AlertTriangle,
+  PhoneCall,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { formatRupiah } from '../lib/utils';
+import { applyWatermark } from '../lib/watermark';
 import toast from 'react-hot-toast';
 
 export default function PasangIklan() {
@@ -55,14 +59,36 @@ export default function PasangIklan() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
 
+  // Format valid yang diizinkan
+  const allowedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+  // Validasi Real-time Flags
+  const isHargaValid = !harga || (Number(harga) >= 100000);
+  const isImeiValid = !imei || (imei.length === 15);
+  const isBateraiValid = !kesehatanBaterai || (Number(kesehatanBaterai) >= 0 && Number(kesehatanBaterai) <= 100);
+  const isLokasiValid = !lokasiDetail || (lokasiDetail.trim().length >= 10);
+  const isDeskripsiValid = !deskripsi || (deskripsi.trim().length >= 20);
+  const isKelengkapanValid = !kelengkapan || (kelengkapan.trim().length >= 5);
+
+  const adaNomorWa = Boolean(profile?.nomor_hp && profile.nomor_hp.trim().length >= 8);
+
+  // Helper validasi file
+  const validateFile = (file) => {
+    if (!allowedFormats.includes(file.type.toLowerCase())) {
+      toast.error(`Format file ${file.name} tidak didukung. Gunakan JPG, PNG, atau WEBP.`);
+      return false;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(`File ${file.name} terlalu besar (maks 5MB)`);
+      return false;
+    }
+    return true;
+  };
+
   // Handler Upload Foto Utama
   const handleFotoUtamaChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Ukuran foto maksimal 5MB');
-        return;
-      }
+    if (file && validateFile(file)) {
       setFotoUtamaFile(file);
       setFotoUtamaPreview(URL.createObjectURL(file));
     }
@@ -80,12 +106,10 @@ export default function PasangIklan() {
     const newPreviews = [];
 
     for (const file of files) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`Ukuran file ${file.name} melebihi 5MB`);
-        continue;
+      if (validateFile(file)) {
+        newFiles.push(file);
+        newPreviews.push(URL.createObjectURL(file));
       }
-      newFiles.push(file);
-      newPreviews.push(URL.createObjectURL(file));
     }
 
     setFotoTambahanFiles((prev) => [...prev, ...newFiles]);
@@ -100,11 +124,7 @@ export default function PasangIklan() {
   // Handler Upload Foto Bukti Kepemilikan
   const handleFotoBuktiChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Ukuran foto bukti maksimal 5MB');
-        return;
-      }
+    if (file && validateFile(file)) {
       setFotoBuktiFile(file);
       setFotoBuktiPreview(URL.createObjectURL(file));
     }
@@ -137,7 +157,15 @@ export default function PasangIklan() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validasi Wajib
+    if (isSubmitting) return;
+
+    // 1. Validasi Profil WhatsApp
+    if (!adaNomorWa) {
+      toast.error('Silakan lengkapi nomor WhatsApp di profil Anda sebelum memasang iklan');
+      return;
+    }
+
+    // 2. Validasi Input Ketat
     if (!merek || !tipe.trim()) {
       toast.error('Silakan masukkan Merek dan Tipe HP');
       return;
@@ -146,12 +174,28 @@ export default function PasangIklan() {
       toast.error('Silakan pilih Kondisi HP');
       return;
     }
-    if (!harga || Number(harga) <= 0) {
-      toast.error('Silakan masukkan Harga yang valid');
+    if (!harga || Number(harga) < 100000) {
+      toast.error('Harga minimal Rp 100.000');
       return;
     }
-    if (!lokasiDetail.trim()) {
-      toast.error('Silakan masukkan Lokasi Detail titik temu');
+    if (!lokasiDetail.trim() || lokasiDetail.trim().length < 10) {
+      toast.error('Lokasi minimal 10 karakter agar jelas');
+      return;
+    }
+    if (!deskripsi.trim() || deskripsi.trim().length < 20) {
+      toast.error('Deskripsi minimal 20 karakter');
+      return;
+    }
+    if (kelengkapan.trim() && kelengkapan.trim().length < 5) {
+      toast.error('Kelengkapan terlalu singkat (minimal 5 karakter)');
+      return;
+    }
+    if (imei.trim() && imei.trim().length !== 15) {
+      toast.error('IMEI harus tepat 15 digit angka');
+      return;
+    }
+    if (kesehatanBaterai && (Number(kesehatanBaterai) < 0 || Number(kesehatanBaterai) > 100)) {
+      toast.error('Kesehatan baterai 0-100%');
       return;
     }
     if (!fotoUtamaFile) {
@@ -165,26 +209,30 @@ export default function PasangIklan() {
 
     try {
       setIsSubmitting(true);
+      const username = profile?.nama_lengkap || user?.email?.split('@')[0] || 'Pengguna';
 
-      // 1. Unggah Foto Utama
-      setUploadProgress('Mengunggah foto utama...');
-      const fotoUtamaUrl = await uploadSingleFile(fotoUtamaFile, 'utama');
+      // 1. Terapkan Watermark & Unggah Foto Utama
+      setUploadProgress('Menerapkan watermark & mengunggah foto utama...');
+      const watermarkedUtama = await applyWatermark(fotoUtamaFile, username);
+      const fotoUtamaUrl = await uploadSingleFile(watermarkedUtama, 'utama');
 
-      // 2. Unggah Foto Tambahan jika ada
+      // 2. Terapkan Watermark & Unggah Foto Tambahan jika ada
       const fotoLainUrls = [];
       if (fotoTambahanFiles.length > 0) {
-        setUploadProgress(`Mengunggah ${fotoTambahanFiles.length} foto tambahan...`);
+        setUploadProgress(`Menerapkan watermark & mengunggah ${fotoTambahanFiles.length} foto tambahan...`);
         for (let i = 0; i < fotoTambahanFiles.length; i++) {
-          const url = await uploadSingleFile(fotoTambahanFiles[i], `tambahan_${i + 1}`);
+          const watermarkedTambahan = await applyWatermark(fotoTambahanFiles[i], username);
+          const url = await uploadSingleFile(watermarkedTambahan, `tambahan_${i + 1}`);
           fotoLainUrls.push(url);
         }
       }
 
-      // 3. Unggah Foto Bukti Kepemilikan
-      setUploadProgress('Mengunggah foto bukti kepemilikan...');
-      const fotoBuktiUrl = await uploadSingleFile(fotoBuktiFile, 'bukti');
+      // 3. Terapkan Watermark & Unggah Foto Bukti Kepemilikan
+      setUploadProgress('Menerapkan watermark & mengunggah foto bukti kepemilikan...');
+      const watermarkedBukti = await applyWatermark(fotoBuktiFile, username);
+      const fotoBuktiUrl = await uploadSingleFile(watermarkedBukti, 'bukti');
 
-      // 4. Simpan Data ke Tabel Iklan dengan kodeVerifikasi dari frontend
+      // 4. Simpan Data ke Tabel Iklan
       setUploadProgress('Menyimpan data iklan...');
       const payloadIklan = {
         penjual_id: user.id,
@@ -252,6 +300,25 @@ export default function PasangIklan() {
         </p>
       </div>
 
+      {/* Peringatan Nomor WhatsApp jika belum diisi di profil */}
+      {!adaNomorWa && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 flex items-start gap-3.5 shadow-xs">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-amber-900">
+              Nomor WhatsApp Belum Terisi di Profil
+            </h3>
+            <p className="text-xs text-amber-800 leading-relaxed">
+              Anda belum mengisi nomor WhatsApp. Silakan lengkapi{' '}
+              <Link to="/profil" className="font-bold underline text-amber-950 hover:text-amber-900">
+                Profil Anda
+              </Link>{' '}
+              agar calon pembeli dapat menghubungi Anda saat tertarik dengan iklan ini.
+            </p>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-8">
 
         {/* ================= BAGIAN 1: INFORMASI BARANG ================= */}
@@ -314,7 +381,7 @@ export default function PasangIklan() {
               />
             </div>
 
-            {/* Kapasitas */}
+            {/* Kapasitas (Hanya 64GB s/d 1TB) */}
             <div className="space-y-1.5">
               <label htmlFor="kapasitas" className="text-xs font-semibold text-slate-700 block cursor-pointer">
                 Kapasitas Penyimpanan
@@ -326,13 +393,11 @@ export default function PasangIklan() {
                 onChange={(e) => setKapasitas(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition cursor-pointer"
               >
-                <option value="32 GB">32 GB</option>
                 <option value="64 GB">64 GB</option>
                 <option value="128 GB">128 GB</option>
                 <option value="256 GB">256 GB</option>
                 <option value="512 GB">512 GB</option>
                 <option value="1 TB">1 TB</option>
-                <option value="Lainnya">Lainnya</option>
               </select>
             </div>
 
@@ -384,11 +449,18 @@ export default function PasangIklan() {
                 value={harga}
                 onChange={(e) => setHarga(e.target.value)}
                 required
-                min="0"
+                min="100000"
                 step="10000"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition font-mono font-bold text-orange-600"
+                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition font-mono font-bold text-orange-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                  !isHargaValid ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
+                }`}
               />
-              {harga && Number(harga) > 0 && (
+              {!isHargaValid && (
+                <p className="text-[11px] text-red-500 font-medium">
+                  Harga minimal Rp 100.000
+                </p>
+              )}
+              {harga && isHargaValid && Number(harga) > 0 && (
                 <p className="text-xs text-orange-600 font-medium">
                   {formatRupiah(harga)}
                 </p>
@@ -457,27 +529,59 @@ export default function PasangIklan() {
               />
             </div>
 
-            {/* Lokasi Detail */}
+            {/* Info WhatsApp Penjual */}
             <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                <span>Nomor WhatsApp Penjual</span>
+                <span className="text-[11px] text-slate-400 font-normal">Otomatis dari Profil</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <PhoneCall className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  value={profile?.nomor_hp || 'Belum diisi di profil'}
+                  disabled
+                  className={`w-full pl-10 pr-3.5 py-2.5 border rounded-xl text-sm font-medium cursor-not-allowed ${
+                    adaNomorWa ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-amber-50 border-amber-200 text-amber-800'
+                  }`}
+                />
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Nomor WhatsApp diambil dari profil Anda agar pembeli bisa menghubungi Anda.
+              </p>
+            </div>
+
+            {/* Lokasi Detail */}
+            <div className="space-y-1.5 sm:col-span-2">
               <label htmlFor="lokasi_detail" className="text-xs font-semibold text-slate-700 block cursor-pointer">
-                Lokasi Detail / Titik Temu <span className="text-red-500">*</span>
+                Lokasi Detail / Titik Temu <span className="text-red-500">* (Min. 10 Karakter)</span>
               </label>
               <input
                 id="lokasi_detail"
                 name="lokasi_detail"
                 type="text"
-                placeholder="Contoh: Kebumen Kota, dekat Alun-alun"
+                placeholder="Contoh: Kebumen Kota, dekat Alun-alun Kebumen"
                 value={lokasiDetail}
                 onChange={(e) => setLokasiDetail(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                minLength={10}
+                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition ${
+                  !isLokasiValid ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
+                }`}
               />
+              {!isLokasiValid && (
+                <p className="text-[11px] text-red-500 font-medium">
+                  Lokasi minimal 10 karakter agar jelas
+                </p>
+              )}
             </div>
 
             {/* Kelengkapan */}
             <div className="space-y-1.5">
               <label htmlFor="kelengkapan" className="text-xs font-semibold text-slate-700 block cursor-pointer">
-                Kelengkapan Unit
+                Kelengkapan Unit (Opsional)
               </label>
               <input
                 id="kelengkapan"
@@ -486,8 +590,15 @@ export default function PasangIklan() {
                 placeholder="Contoh: Fullset original (Dus + Kabel Type-C)"
                 value={kelengkapan}
                 onChange={(e) => setKelengkapan(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition ${
+                  !isKelengkapanValid ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
+                }`}
               />
+              {!isKelengkapanValid && (
+                <p className="text-[11px] text-red-500 font-medium">
+                  Kelengkapan terlalu singkat (minimal 5 karakter)
+                </p>
+              )}
             </div>
 
             {/* Kesehatan Baterai */}
@@ -504,14 +615,21 @@ export default function PasangIklan() {
                 max="100"
                 value={kesehatanBaterai}
                 onChange={(e) => setKesehatanBaterai(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                  !isBateraiValid ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
+                }`}
               />
+              {!isBateraiValid && (
+                <p className="text-[11px] text-red-500 font-medium">
+                  Kesehatan baterai 0-100%
+                </p>
+              )}
             </div>
 
             {/* IMEI */}
             <div className="sm:col-span-2 space-y-1.5">
               <label htmlFor="imei" className="text-xs font-semibold text-slate-700 block cursor-pointer">
-                Nomor IMEI (15 Digit)
+                Nomor IMEI (Opsional, 15 Digit Angka)
               </label>
               <input
                 id="imei"
@@ -521,8 +639,15 @@ export default function PasangIklan() {
                 maxLength="15"
                 value={imei}
                 onChange={(e) => setImei(e.target.value.replace(/\D/g, ''))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition ${
+                  !isImeiValid ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
+                }`}
               />
+              {!isImeiValid && (
+                <p className="text-[11px] text-red-500 font-medium">
+                  IMEI harus 15 digit angka
+                </p>
+              )}
               <p className="text-[11px] text-slate-400">
                 IMEI membantu calon pembeli memverifikasi legalitas dan status garansi unit.
               </p>
@@ -531,7 +656,7 @@ export default function PasangIklan() {
             {/* Deskripsi */}
             <div className="sm:col-span-2 space-y-1.5">
               <label htmlFor="deskripsi" className="text-xs font-semibold text-slate-700 block cursor-pointer">
-                Deskripsi Lengkap
+                Deskripsi Lengkap <span className="text-red-500">* (Min. 20 Karakter)</span>
               </label>
               <textarea
                 id="deskripsi"
@@ -540,8 +665,17 @@ export default function PasangIklan() {
                 placeholder="Jelaskan kondisi unit secara jujur: riwayat pemakaian, minus fisik, kelengkapan, garansi, dll."
                 value={deskripsi}
                 onChange={(e) => setDeskripsi(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                required
+                minLength={20}
+                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:bg-white transition ${
+                  !isDeskripsiValid ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
+                }`}
               />
+              {!isDeskripsiValid && (
+                <p className="text-[11px] text-red-500 font-medium">
+                  Deskripsi minimal 20 karakter
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -576,13 +710,16 @@ export default function PasangIklan() {
                     alt="Pratinjau Foto Utama"
                     className="w-full h-full object-cover"
                   />
+                  <div className="absolute bottom-2 left-2 bg-teal-600 text-white text-[11px] font-bold px-2 py-0.5 rounded shadow-sm">
+                    Foto Utama Terpilih
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
                       setFotoUtamaFile(null);
                       setFotoUtamaPreview(null);
                     }}
-                    className="absolute top-3 right-3 p-2 bg-red-600 text-white rounded-xl shadow-md hover:bg-red-700 transition"
+                    className="absolute top-3 right-3 p-2 bg-red-600 text-white rounded-xl shadow-md hover:bg-red-700 transition cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -600,7 +737,7 @@ export default function PasangIklan() {
                   </span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     onChange={handleFotoUtamaChange}
                     className="hidden"
                   />
@@ -629,7 +766,7 @@ export default function PasangIklan() {
                     <button
                       type="button"
                       onClick={() => removeFotoTambahan(index)}
-                      className="absolute top-1.5 right-1.5 p-1 bg-red-600 text-white rounded-lg opacity-90 hover:opacity-100 transition"
+                      className="absolute top-1.5 right-1.5 p-1 bg-red-600 text-white rounded-lg opacity-90 hover:opacity-100 transition cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -644,7 +781,7 @@ export default function PasangIklan() {
                     </span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       multiple
                       onChange={handleFotoTambahanChange}
                       className="hidden"
@@ -654,7 +791,7 @@ export default function PasangIklan() {
               </div>
             </div>
 
-            {/* ⭐ FOTO BUKTI KEPEMILIKAN DENGAN KODE VERIFIKASI SEBELUM UNGGAH */}
+            {/* ⭐ FOTO BUKTI KEPEMILIKAN DENGAN CONTOH BENAR VS SALAH */}
             <div className="space-y-4 pt-4 border-t border-slate-100">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-600" />
@@ -664,7 +801,8 @@ export default function PasangIklan() {
               </div>
 
               {/* Banner Petunjuk & Tampilan Kode Verifikasi */}
-              <div className="bg-emerald-50/90 border-2 border-emerald-200 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="bg-emerald-50/90 border-2 border-emerald-200 rounded-2xl p-5 sm:p-6 space-y-5">
+                
                 {/* Tampilan Kode Verifikasi Besar */}
                 <div className="bg-white rounded-xl border border-emerald-300 p-4 text-center shadow-xs space-y-1">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
@@ -674,31 +812,80 @@ export default function PasangIklan() {
                     {kodeVerifikasi}
                   </div>
                   <span className="text-[11px] text-slate-400 block">
-                    Gunakan kode unik di atas untuk mengambil foto bukti kepemilikan
+                    Kode ini menghubungkan unit smartphone dengan foto bukti fisik Anda
                   </span>
                 </div>
 
-                {/* Cara Membuat Foto Bukti */}
+                {/* 3 Langkah Mudah */}
                 <div className="space-y-2 text-xs sm:text-sm text-emerald-950">
                   <p className="font-bold text-emerald-900 flex items-center gap-1.5">
                     <Info className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Cara membuat foto bukti:</span>
+                    <span>Cara Membuat Foto Bukti yang Benar:</span>
+                  </p>
+                  <p className="text-xs text-emerald-800">
+                    Ikuti 3 langkah mudah ini:
                   </p>
                   <ol className="list-decimal list-inside space-y-1.5 text-emerald-900 pl-1 leading-relaxed">
                     <li>
                       Buka halaman ini di HP yang akan dijual, atau tulis kode di atas di selembar kertas
                     </li>
                     <li>
-                      Letakkan kertas / letakkan HP yang menampilkan kode di samping unit HP
+                      Letakkan HP yang dijual berdampingan dengan kode tersebut
                     </li>
                     <li>
                       Foto keduanya dalam satu bingkai sehingga kode terlihat jelas
                     </li>
-                    <li>
-                      Unggah foto hasilnya di bawah ini
-                    </li>
                   </ol>
                 </div>
+
+                {/* Contoh Perbandingan 2 Kolom (Benar vs Salah) */}
+                <div className="pt-2 border-t border-emerald-200 space-y-2">
+                  <span className="text-xs font-bold text-emerald-900 block">
+                    Contoh Perbandingan:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    
+                    {/* Contoh Benar */}
+                    <div className="bg-white border-2 border-emerald-400 rounded-xl p-3.5 space-y-2 shadow-xs">
+                      <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>FOTO BENAR</span>
+                      </div>
+                      <div className="aspect-[16/9] bg-emerald-50 rounded-lg border border-dashed border-emerald-300 flex flex-col items-center justify-center p-3 text-center">
+                        <div className="text-[11px] font-mono font-extrabold text-teal-700 bg-white px-2 py-1 rounded border border-teal-200 shadow-xs mb-1">
+                          [HP + Kertas {kodeVerifikasi}]
+                        </div>
+                        <span className="text-[11px] text-emerald-800 font-medium">
+                          Unit HP & kertas kode dalam 1 bingkai
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-emerald-700 font-medium text-center">
+                        Kode terlihat jelas di foto
+                      </p>
+                    </div>
+
+                    {/* Contoh Salah */}
+                    <div className="bg-white border-2 border-red-300 rounded-xl p-3.5 space-y-2 shadow-xs">
+                      <div className="flex items-center gap-1.5 text-red-700 font-bold text-xs">
+                        <XCircle className="w-4 h-4 text-red-500" />
+                        <span>FOTO SALAH</span>
+                      </div>
+                      <div className="aspect-[16/9] bg-red-50 rounded-lg border border-dashed border-red-200 flex flex-col items-center justify-center p-3 text-center">
+                        <div className="text-[11px] font-medium text-red-700 line-through mb-1">
+                          [Hanya foto unit tanpa kode]
+                        </div>
+                        <span className="text-[11px] text-red-600">
+                          Foto dari internet / tanpa kode verifikasi
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-red-600 font-medium text-center">
+                        Tidak ada kode atau buram
+                      </p>
+                    </div>
+
+                  </div>
+                </div>
+
               </div>
 
               {/* Kotak Unggah Foto Bukti Kepemilikan */}
@@ -718,7 +905,7 @@ export default function PasangIklan() {
                       setFotoBuktiFile(null);
                       setFotoBuktiPreview(null);
                     }}
-                    className="absolute top-3 right-3 p-2 bg-red-600 text-white rounded-xl shadow-md hover:bg-red-700 transition"
+                    className="absolute top-3 right-3 p-2 bg-red-600 text-white rounded-xl shadow-md hover:bg-red-700 transition cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -736,7 +923,7 @@ export default function PasangIklan() {
                   </span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     onChange={handleFotoBuktiChange}
                     className="hidden"
                   />
@@ -748,16 +935,16 @@ export default function PasangIklan() {
         </section>
 
         {/* ================= BAGIAN 4: TOMBOL SIMPAN ================= */}
-        <div className="pt-2">
+        <div className="pt-2 space-y-3">
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full py-4 px-6 bg-orange-500 hover:bg-orange-600 disabled:bg-slate-300 text-white font-bold text-base sm:text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 cursor-pointer disabled:cursor-not-allowed"
+            disabled={isSubmitting || !adaNomorWa}
+            className="w-full py-4 px-6 bg-orange-500 hover:bg-orange-600 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold text-base sm:text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 cursor-pointer disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-6 h-6 animate-spin" />
-                <span>{uploadProgress || 'Menyimpan Iklan...'}</span>
+                <span>{uploadProgress || 'Menyimpan...'}</span>
               </>
             ) : (
               <>
@@ -766,6 +953,12 @@ export default function PasangIklan() {
               </>
             )}
           </button>
+
+          {!adaNomorWa && (
+            <p className="text-xs text-center text-red-500 font-medium">
+              Tombol non-aktif karena nomor WhatsApp belum diisi di profil Anda.
+            </p>
+          )}
         </div>
 
       </form>
