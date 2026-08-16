@@ -846,40 +846,38 @@ export default function PasangIklan() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     
                     {/* Contoh Benar */}
-                    <div className="bg-white border-2 border-emerald-400 rounded-xl p-3.5 space-y-2 shadow-xs">
+                    <div className="bg-white border-2 border-emerald-400 rounded-xl p-3 space-y-2 shadow-xs">
                       <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span>FOTO BENAR</span>
                       </div>
-                      <div className="aspect-[16/9] bg-emerald-50 rounded-lg border border-dashed border-emerald-300 flex flex-col items-center justify-center p-3 text-center">
-                        <div className="text-[11px] font-mono font-extrabold text-teal-700 bg-white px-2 py-1 rounded border border-teal-200 shadow-xs mb-1">
-                          [HP + Kertas {kodeVerifikasi}]
-                        </div>
-                        <span className="text-[11px] text-emerald-800 font-medium">
-                          Unit HP & kertas kode dalam 1 bingkai
-                        </span>
+                      <div className="aspect-[4/3] rounded-lg overflow-hidden bg-slate-100 border border-emerald-200 relative">
+                        <img
+                          src="/images/contoh-bukti-benar.jpg"
+                          alt="Contoh Foto Bukti Benar"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <p className="text-[11px] text-emerald-700 font-medium text-center">
-                        Kode terlihat jelas di foto
+                      <p className="text-[11px] text-emerald-800 font-medium text-center leading-tight">
+                        Kode terlihat jelas di layar / kertas foto
                       </p>
                     </div>
 
                     {/* Contoh Salah */}
-                    <div className="bg-white border-2 border-red-300 rounded-xl p-3.5 space-y-2 shadow-xs">
+                    <div className="bg-white border-2 border-red-300 rounded-xl p-3 space-y-2 shadow-xs">
                       <div className="flex items-center gap-1.5 text-red-700 font-bold text-xs">
-                        <XCircle className="w-4 h-4 text-red-500" />
+                        <XCircle className="w-4 h-4 text-red-500 shrink-0" />
                         <span>FOTO SALAH</span>
                       </div>
-                      <div className="aspect-[16/9] bg-red-50 rounded-lg border border-dashed border-red-200 flex flex-col items-center justify-center p-3 text-center">
-                        <div className="text-[11px] font-medium text-red-700 line-through mb-1">
-                          [Hanya foto unit tanpa kode]
-                        </div>
-                        <span className="text-[11px] text-red-600">
-                          Foto dari internet / tanpa kode verifikasi
-                        </span>
+                      <div className="aspect-[4/3] rounded-lg overflow-hidden bg-slate-100 border border-red-200 relative">
+                        <img
+                          src="/images/contoh-bukti-salah.jpg"
+                          alt="Contoh Foto Bukti Salah"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <p className="text-[11px] text-red-600 font-medium text-center">
-                        Tidak ada kode atau buram
+                      <p className="text-[11px] text-red-700 font-medium text-center leading-tight">
+                        Hanya foto unit tanpa kode verifikasi
                       </p>
                     </div>
 
