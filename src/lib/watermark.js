@@ -1,8 +1,8 @@
 /**
  * Helper Watermark & Kompresi Otomatis Buktip Menggunakan HTML5 Canvas API
- * - Mengompresi & menyesuaikan resolusi maksimal (max 1600px) agar file ringan (<400KB)
- * - Menerapkan pola watermark tersebar (tiled) berulang miring 30 derajat ke seluruh permukaan foto
- * - Format teks: "Buktip @[NamaPengguna]" dengan transparansi halus (15-20%) anti-crop
+ * - Menyesuaikan resolusi maksimal (max 1600px) agar tajam dan ringan (<400KB)
+ * - Menerapkan pola watermark tersebar (tiled) berulang 28-30 derajat ke seluruh permukaan foto
+ * - Format teks: "Buktip @[NamaPengguna]" (Font 18-20px, ketebalan semi-bold, jarak rapat 100-120px, opacity 30-35%)
  */
 
 export async function applyWatermark(file, username = 'Pengguna') {
@@ -60,16 +60,16 @@ export async function applyWatermark(file, username = 'Pengguna') {
           const cleanUsername = String(username).replace(/^@+/, '').trim() || 'Pengguna';
           const watermarkText = `Buktip @${cleanUsername}`;
 
-          // Ukuran font proporsional (13-16px)
-          const fontSize = Math.max(13, Math.min(16, Math.floor(canvas.width * 0.015)));
-          ctx.font = `500 ${fontSize}px sans-serif`;
+          // Ukuran font tegas & jelas terbaca (18-20px)
+          const fontSize = Math.max(18, Math.min(22, Math.floor(canvas.width * 0.020)));
+          ctx.font = `600 ${fontSize}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
 
-          // Jarak antar watermark (step grid)
-          const stepX = Math.max(180, Math.floor(canvas.width * 0.18));
-          const stepY = Math.max(130, Math.floor(canvas.height * 0.14));
-          const angleRad = -30 * (Math.PI / 180); // Sudut kemiringan 30 derajat
+          // Jarak antar watermark lebih rapat (sekitar 100-120px)
+          const stepX = Math.max(120, Math.floor(canvas.width * 0.12));
+          const stepY = Math.max(90, Math.floor(canvas.height * 0.08));
+          const angleRad = -28 * (Math.PI / 180); // Kemiringan 28 derajat
 
           ctx.save();
 
@@ -82,12 +82,12 @@ export async function applyWatermark(file, username = 'Pengguna') {
               ctx.translate(x + rowOffset, y);
               ctx.rotate(angleRad);
 
-              // Bayangan halus hitam tipis (10%) agar terbaca di background terang
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.10)';
-              ctx.fillText(watermarkText, 1, 1);
+              // Bayangan halus hitam tipis (16%) agar tegas dan terbaca di latar terang/putih
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+              ctx.fillText(watermarkText, 1.2, 1.2);
 
-              // Teks putih transparan (18%) agar tidak merusak visual foto asli
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+              // Teks putih tegas dengan opasitas 32-35% (jelas terlihat, tidak mengaburkan detail HP)
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.34)';
               ctx.fillText(watermarkText, 0, 0);
 
               ctx.restore();
