@@ -1,8 +1,8 @@
 /**
  * Helper Watermark & Kompresi Otomatis Buktip Menggunakan HTML5 Canvas API
- * - Menyesuaikan dimensi maksimal gambar (max 1600px) agar tajam dan hemat ukuran
- * - Mengompresi file menjadi JPEG optimal (~200KB - 400KB) agar tidak melebihi limit Supabase Storage
- * - Menambahkan watermark transparan "Buktip - @[NamaPengguna]" di pojok kanan bawah
+ * - Mengompresi & menyesuaikan resolusi maksimal (max 1600px) agar file ringan (<400KB)
+ * - Menerapkan pola watermark tersebar (tiled) berulang miring 30 derajat ke seluruh permukaan foto
+ * - Format teks: "Buktip @[NamaPengguna]" dengan transparansi halus (15-20%) anti-crop
  */
 
 export async function applyWatermark(file, username = 'Pengguna') {
@@ -20,10 +20,10 @@ export async function applyWatermark(file, username = 'Pengguna') {
         try {
           URL.revokeObjectURL(objectUrl);
 
-          let originalWidth = img.naturalWidth || img.width;
-          let originalHeight = img.naturalHeight || img.height;
+          const originalWidth = img.naturalWidth || img.width;
+          const originalHeight = img.naturalHeight || img.height;
 
-          // Batasi resolusi maksimal 1600px untuk ketajaman optimal & ukuran file ringan
+          // 1. Batasi dimensi maksimal 1600px untuk resolusi tajam namun file tetap ringan
           const MAX_SIZE = 1600;
           let targetWidth = originalWidth;
           let targetHeight = originalHeight;
@@ -53,43 +53,51 @@ export async function applyWatermark(file, username = 'Pengguna') {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
 
-          // Gambar foto dengan dimensi yang sudah dioptimasi
+          // 2. Gambar foto asli dengan dimensi yang dioptimasi
           ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-          // Hitung ukuran watermark proporsional
-          const fontSize = Math.max(14, Math.floor(canvas.width * 0.024));
-          const paddingX = Math.floor(fontSize * 0.75);
-          const paddingY = Math.floor(fontSize * 0.4);
-          const margin = Math.floor(fontSize * 0.8);
+          // 3. Terapkan Watermark Tersebar (Tiled Pattern)
+          const cleanUsername = String(username).replace(/^@+/, '').trim() || 'Pengguna';
+          const watermarkText = `Buktip @${cleanUsername}`;
 
-          const cleanUsername = String(username).replace(/^@+/, '');
-          const watermarkText = `Buktip - @${cleanUsername}`;
-
-          ctx.font = `600 ${fontSize}px sans-serif`;
+          // Ukuran font proporsional (13-16px)
+          const fontSize = Math.max(13, Math.min(16, Math.floor(canvas.width * 0.015)));
+          ctx.font = `500 ${fontSize}px sans-serif`;
+          ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
 
-          const textMetrics = ctx.measureText(watermarkText);
-          const badgeWidth = textMetrics.width + paddingX * 2;
-          const badgeHeight = fontSize + paddingY * 2;
+          // Jarak antar watermark (step grid)
+          const stepX = Math.max(180, Math.floor(canvas.width * 0.18));
+          const stepY = Math.max(130, Math.floor(canvas.height * 0.14));
+          const angleRad = -30 * (Math.PI / 180); // Sudut kemiringan 30 derajat
 
-          const badgeX = canvas.width - badgeWidth - margin;
-          const badgeY = canvas.height - badgeHeight - margin;
+          ctx.save();
 
-          // Gambar badge latar belakang semi-transparan
-          ctx.fillStyle = 'rgba(15, 23, 42, 0.45)'; // Slate 900 dengan opacity 0.45
-          if (ctx.roundRect) {
-            ctx.beginPath();
-            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, Math.floor(badgeHeight * 0.25));
-            ctx.fill();
-          } else {
-            ctx.fillRect(badgeX, badgeY, badgeWidth, badgeHeight);
+          // Loop untuk mengisi seluruh permukaan foto secara berulang
+          let rowIndex = 0;
+          for (let y = -stepY; y <= canvas.height + stepY * 2; y += stepY) {
+            const rowOffset = (rowIndex % 2 !== 0) ? (stepX / 2) : 0;
+            for (let x = -stepX; x <= canvas.width + stepX * 2; x += stepX) {
+              ctx.save();
+              ctx.translate(x + rowOffset, y);
+              ctx.rotate(angleRad);
+
+              // Bayangan halus hitam tipis (10%) agar terbaca di background terang
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.10)';
+              ctx.fillText(watermarkText, 1, 1);
+
+              // Teks putih transparan (18%) agar tidak merusak visual foto asli
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+              ctx.fillText(watermarkText, 0, 0);
+
+              ctx.restore();
+            }
+            rowIndex++;
           }
 
-          // Gambar teks watermark putih transparan
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
-          ctx.fillText(watermarkText, badgeX + paddingX, badgeY + badgeHeight / 2);
+          ctx.restore();
 
-          // Konversi ke File JPEG dengan kompresi optimal 0.82 (kualitas tinggi, ukuran kecil < 500KB)
+          // 4. Konversi ke File JPEG terkompresi (kualitas 0.82, ukuran <400KB)
           canvas.toBlob(
             (blob) => {
               if (blob) {
@@ -107,7 +115,7 @@ export async function applyWatermark(file, username = 'Pengguna') {
             0.82
           );
         } catch (err) {
-          console.warn('Gagal memproses watermark pada canvas, menggunakan file asli:', err);
+          console.warn('Gagal menerapkan watermark tersebar, menggunakan file asli:', err);
           resolve(file);
         }
       };
@@ -119,7 +127,7 @@ export async function applyWatermark(file, username = 'Pengguna') {
 
       img.src = objectUrl;
     } catch (e) {
-      console.warn('Kesalahan saat inisialisasi watermark:', e);
+      console.warn('Kesalahan inisialisasi watermark:', e);
       resolve(file);
     }
   });
