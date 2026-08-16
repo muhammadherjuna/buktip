@@ -13,6 +13,7 @@ import Daftar from './pages/Daftar';
 import Profil from './pages/Profil';
 import IklanSaya from './pages/IklanSaya';
 import Favorit from './pages/Favorit';
+import Tentang from './pages/Tentang';
 
 const router = createBrowserRouter([
   {
@@ -74,6 +75,10 @@ const router = createBrowserRouter([
             <Favorit />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: 'tentang',
+        element: <Tentang />,
       },
     ],
   },

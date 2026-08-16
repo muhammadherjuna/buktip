@@ -68,14 +68,21 @@ export default function IklanCard({ iklan }) {
           </p>
         )}
 
-        {/* Harga (Paling Mencolok & Menonjol) */}
-        <div className="mt-3.5 mb-1 flex items-baseline gap-1.5">
-          <span className="text-xl sm:text-2xl font-black text-orange-500 tracking-tight">
-            {formatRupiah(iklan.harga)}
-          </span>
-          {iklan.harga_negosiasi && (
-            <span className="text-xs text-slate-400 font-medium">
-              (Nego)
+        {/* Harga (Tebal Teal) & Kode Verifikasi */}
+        <div className="mt-3 mb-1 flex items-center justify-between gap-1.5">
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl sm:text-2xl font-black text-teal-600 tracking-tight">
+              {formatRupiah(iklan.harga)}
+            </span>
+            {iklan.harga_negosiasi && (
+              <span className="text-xs text-slate-400 font-medium">
+                (Nego)
+              </span>
+            )}
+          </div>
+          {iklan.kode_verifikasi && (
+            <span className="text-[10px] font-mono font-bold text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded">
+              {iklan.kode_verifikasi}
             </span>
           )}
         </div>

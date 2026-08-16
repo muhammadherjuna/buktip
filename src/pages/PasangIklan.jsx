@@ -329,6 +329,58 @@ export default function PasangIklan() {
 
     try {
       setIsSubmitting(true);
+
+      // A. Cek Batas Maksimal 5 Iklan Aktif
+      const { data: activeCheck } = await supabase
+        .from('iklan')
+        .select('id')
+        .eq('penjual_id', user.id)
+        .or('status.eq.aktif,status.eq.tersedia,status.is.null');
+
+      if (activeCheck && activeCheck.length >= 5) {
+        toast.error('Anda sudah memiliki 5 iklan aktif. Harap hapus atau tandai terjual iklan lama sebelum memasang yang baru.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // B. Cegah Iklan Ganda (Merek, Tipe, dan IMEI sama persis)
+      if (imei.trim()) {
+        const { data: dupCheck } = await supabase
+          .from('iklan')
+          .select('id')
+          .eq('penjual_id', user.id)
+          .eq('merek', merek)
+          .eq('tipe', tipe.trim())
+          .eq('imei', imei.trim())
+          .or('status.eq.aktif,status.eq.tersedia,status.is.null')
+          .maybeSingle();
+
+        if (dupCheck) {
+          toast.error('Iklan dengan HP dan IMEI yang sama sudah terpasang. Tidak boleh dipasang berkali-kali.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // C. Cek Riwayat Kode Verifikasi
+      const { data: codeCheck } = await supabase
+        .from('iklan')
+        .select('id')
+        .eq('penjual_id', user.id)
+        .eq('kode_verifikasi', kodeVerifikasi)
+        .maybeSingle();
+
+      if (codeCheck) {
+        const newCode = `KB-${Math.floor(1000 + Math.random() * 9000)}`;
+        setKodeVerifikasi(newCode);
+        try {
+          localStorage.setItem('buktip_kode_verifikasi', newCode);
+        } catch (_) {}
+        toast.error('Kode verifikasi sudah dipakai. Silakan refresh halaman untuk dapat kode baru.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const username = profile?.nama_lengkap || user?.email?.split('@')[0] || 'Pengguna';
 
       // 1. Terapkan Watermark & Unggah Foto Utama
