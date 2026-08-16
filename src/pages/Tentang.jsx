@@ -47,7 +47,7 @@ export default function Tentang() {
           <div className="w-16 h-16 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto shadow-xs border border-teal-100">
             <ShieldCheck className="w-9 h-9" />
           </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="font-serif font-black text-2xl sm:text-4xl text-slate-900 tracking-tight">
             Tentang Buktip
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
@@ -59,7 +59,7 @@ export default function Tentang() {
         <section className="space-y-3 bg-teal-50/70 border border-teal-200/80 rounded-2xl p-5 sm:p-6">
           <div className="flex items-center gap-2 text-teal-900 font-bold text-base sm:text-lg">
             <ShieldCheck className="w-5 h-5 text-teal-600 shrink-0" />
-            <h2>Apa Itu Buktip?</h2>
+            <h2 className="font-serif font-bold">Apa Itu Buktip?</h2>
           </div>
           <p className="text-xs sm:text-sm text-teal-950 leading-relaxed font-medium">
             <strong>Buktip</strong> adalah tempat jual-beli HP bekas yang <strong>LEBIH AMAN</strong>. 
@@ -71,7 +71,7 @@ export default function Tentang() {
         {/* ================= 📝 BAGAIMANA CARA KERJANYA? ================= */}
         <section className="space-y-6">
           <div className="text-center space-y-1">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+            <h2 className="font-serif font-bold text-xl sm:text-2xl text-slate-900">
               Bagaimana Cara Kerjanya?
             </h2>
             <p className="text-xs sm:text-sm text-slate-500">
