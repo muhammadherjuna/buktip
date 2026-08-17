@@ -9,12 +9,10 @@ export default function FloatingWhatsapp() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat Admin WhatsApp"
-      className="fixed bottom-6 right-6 z-40 group flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white p-3.5 sm:p-4 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer ring-4 ring-white/80"
+      title="Chat Admin WhatsApp"
+      className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 flex items-center justify-center cursor-pointer ring-4 ring-white/90"
     >
-      <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 text-white fill-white/20" />
-      <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 ease-in-out text-xs font-bold pr-1">
-        Bantuan Admin
-      </span>
+      <MessageCircle className="w-7 h-7 text-white fill-white/20" />
     </a>
   );
 }

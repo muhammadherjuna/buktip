@@ -291,7 +291,7 @@ export default function DetailIklan() {
               
               {/* Thumbnail Vertikal (Maksimal 5) */}
               {semuaFoto.length > 1 && (
-                <div className="flex md:flex-col gap-2.5 overflow-x-auto md:overflow-y-auto max-h-[460px] w-full md:w-20 shrink-0 pb-1 md:pb-0 pr-1">
+                <div className="flex md:flex-col gap-2.5 overflow-hidden w-full md:w-20 shrink-0">
                   {semuaFoto.slice(0, 5).map((foto, idx) => {
                     const isLastSlot = idx === 4 && semuaFoto.length > 5;
                     const sisaFoto = semuaFoto.length - 4;
@@ -500,8 +500,9 @@ export default function DetailIklan() {
                   <span className="text-xs text-teal-800 block">Kode di Layar:</span>
                   <span className="font-mono text-xl sm:text-2xl font-black text-teal-950">{iklan.kode_verifikasi || 'KB-XXXX'}</span>
                 </div>
-                <span className="text-xs font-bold text-teal-700 bg-white px-3 py-1.5 rounded-xl border border-teal-200 shadow-xs">
-                  ✅ Cocokkan dengan Tulisan di Foto
+                <span className="text-xs font-bold text-teal-800 bg-white px-3 py-1.5 rounded-xl border border-teal-200 shadow-xs inline-flex items-center gap-1.5">
+                  <FileCheck className="w-4 h-4 text-teal-600" />
+                  <span>Cocokkan dengan Tulisan di Foto</span>
                 </span>
               </div>
             </div>
@@ -753,51 +754,6 @@ export default function DetailIklan() {
 
         </div>
       </section>
-
-      {/* ================= STICKY BOTTOM BAR & FLOATING HEART ================= */}
-      <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3.5 sm:p-4 z-40 shadow-2xl flex items-center justify-between gap-4 max-w-4xl mx-auto rounded-t-3xl sm:bottom-4 sm:rounded-3xl sm:border sm:inset-x-4">
-        <div className="space-y-0.5 min-w-0">
-          <span className="text-[11px] text-slate-500 block truncate">
-            {iklan.merek} {iklan.tipe}
-          </span>
-          <span className="text-lg sm:text-xl font-black text-teal-600 tracking-tight block">
-            {formatRupiah(iklan.harga)}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleToggleFavorit}
-            className={`p-3 rounded-2xl border transition cursor-pointer ${
-              favorit ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-            }`}
-            title="Favorit"
-          >
-            <Heart className={`w-5 h-5 ${favorit ? 'fill-red-500 text-red-500' : ''}`} />
-          </button>
-
-          {isTerjual ? (
-            <button
-              type="button"
-              disabled
-              className="px-5 sm:px-8 py-3 bg-slate-200 text-slate-500 font-bold text-xs sm:text-sm rounded-2xl cursor-not-allowed border border-slate-300"
-            >
-              Sudah Terjual
-            </button>
-          ) : (
-            <a
-              href={getWhatsAppLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 sm:px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md hover:shadow-lg transition cursor-pointer"
-            >
-              <MessageCircle className="w-4.5 h-4.5" />
-              <span>Hubungi via WhatsApp</span>
-            </a>
-          )}
-        </div>
-      </div>
 
     </div>
   );
