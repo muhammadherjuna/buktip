@@ -12,12 +12,14 @@ import {
   AlertCircle,
   Clock,
   ShieldCheck,
-  Archive
+  Archive,
+  Share2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { formatRupiah, formatTanggal } from '../lib/utils';
 import ModalConfirm from '../components/common/ModalConfirm';
+import ShareCardModal from '../components/common/ShareCardModal';
 import toast from 'react-hot-toast';
 
 export default function IklanSaya() {
@@ -27,6 +29,7 @@ export default function IklanSaya() {
   const [iklanList, setIklanList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedShareIklan, setSelectedShareIklan] = useState(null);
 
   // State Modal Konfirmasi
   const [modalConfig, setModalConfig] = useState({
@@ -327,8 +330,8 @@ export default function IklanSaya() {
                   </div>
                 </div>
 
-                {/* Bagian Bawah Kartu: 3 Tombol Aksi Lebar Penuh Sejajar */}
-                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100">
+                {/* Bagian Bawah Kartu: 4 Tombol Aksi Sejajar */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100">
                   {/* 1. Tombol Edit */}
                   <Link
                     to={`/pasang-iklan?edit=${iklan.id}`}
@@ -338,7 +341,18 @@ export default function IklanSaya() {
                     <span>Edit</span>
                   </Link>
 
-                  {/* 2. Tombol Tandai Terjual / Tersedia */}
+                  {/* 2. Tombol Bagikan Gambar Status WA / IG */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedShareIklan(iklan)}
+                    className="flex items-center justify-center gap-1.5 py-2 px-3 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold text-xs rounded-xl border border-teal-200 transition cursor-pointer"
+                    title="Bagikan Gambar Promosi"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Bagikan</span>
+                  </button>
+
+                  {/* 3. Tombol Tandai Terjual / Tersedia */}
                   <button
                     type="button"
                     onClick={() => handleOpenStatusModal(iklan)}
@@ -351,17 +365,17 @@ export default function IklanSaya() {
                     {isTerjual ? (
                       <>
                         <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Tandai Tersedia</span>
+                        <span>Tersedia</span>
                       </>
                     ) : (
                       <>
                         <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
-                        <span>Tandai Terjual</span>
+                        <span>Terjual</span>
                       </>
                     )}
                   </button>
 
-                  {/* 3. Tombol Hapus */}
+                  {/* 4. Tombol Hapus */}
                   <button
                     type="button"
                     onClick={() => handleOpenDeleteModal(iklan)}
@@ -387,6 +401,13 @@ export default function IklanSaya() {
         confirmText={modalConfig.confirmText}
         type={modalConfig.type}
         isProcessing={isProcessing}
+      />
+
+      {/* Modal Social Share Card Generator */}
+      <ShareCardModal
+        isOpen={!!selectedShareIklan}
+        onClose={() => setSelectedShareIklan(null)}
+        iklan={selectedShareIklan}
       />
 
     </div>

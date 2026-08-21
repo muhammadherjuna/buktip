@@ -27,13 +27,15 @@ import {
   Info,
   ZoomIn,
   X,
-  Check
+  Check,
+  Share2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatRupiah, formatTanggal } from '../lib/utils';
 import { isFavorit, toggleFavorit } from '../lib/favorit';
 import { useAuth } from '../contexts/AuthContext';
 import IklanCard from '../components/iklan/IklanCard';
+import ShareCardModal from '../components/common/ShareCardModal';
 import toast from 'react-hot-toast';
 
 export default function DetailIklan() {
@@ -49,6 +51,7 @@ export default function DetailIklan() {
   const [favorit, setFavorit] = useState(false);
   const [deskripsiExpanded, setDeskripsiExpanded] = useState(false);
   const [modalBuktiOpen, setModalBuktiOpen] = useState(false);
+  const [modalShareOpen, setModalShareOpen] = useState(false);
 
   // Fungsi menandai sudah dilihat berbasis hari di localStorage (Anti Manipulasi & Realtime Update)
   const tandaiSudahDilihat = async (iklanId) => {
@@ -597,8 +600,8 @@ export default function DetailIklan() {
               </p>
             </div>
 
-            {/* Baris 4: Tombol CTA Utama (WhatsApp Lebar Penuh) */}
-            <div>
+            {/* Baris 4: Tombol CTA Utama (WhatsApp & Bagikan Gambar) */}
+            <div className="space-y-2.5">
               {isTerjual ? (
                 <button
                   type="button"
@@ -619,6 +622,15 @@ export default function DetailIklan() {
                   <span>Hubungi Penjual via WhatsApp</span>
                 </a>
               )}
+
+              <button
+                type="button"
+                onClick={() => setModalShareOpen(true)}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 hover:bg-teal-50/70 text-slate-700 hover:text-teal-700 font-bold rounded-2xl border border-slate-200 hover:border-teal-300 transition text-xs sm:text-sm cursor-pointer"
+              >
+                <Share2 className="w-4 h-4 text-teal-600" />
+                <span>Bagikan Gambar Promosi (WA / IG Story)</span>
+              </button>
             </div>
 
             {/* Baris 5: Kartu Profil Penjual 👤 */}
@@ -846,6 +858,13 @@ export default function DetailIklan() {
           </div>
         </div>
       )}
+
+      {/* ================= MODAL SOCIAL SHARE CARD GENERATOR ================= */}
+      <ShareCardModal
+        isOpen={modalShareOpen}
+        onClose={() => setModalShareOpen(false)}
+        iklan={iklan}
+      />
 
     </div>
   );
