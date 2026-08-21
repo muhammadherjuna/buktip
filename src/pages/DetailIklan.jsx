@@ -24,7 +24,10 @@ import {
   ChevronUp,
   FileCheck,
   Smartphone,
-  Info
+  Info,
+  ZoomIn,
+  X,
+  Check
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatRupiah, formatTanggal } from '../lib/utils';
@@ -45,6 +48,7 @@ export default function DetailIklan() {
   const [fotoAktifIndex, setFotoAktifIndex] = useState(0);
   const [favorit, setFavorit] = useState(false);
   const [deskripsiExpanded, setDeskripsiExpanded] = useState(false);
+  const [modalBuktiOpen, setModalBuktiOpen] = useState(false);
 
   // Fungsi menandai sudah dilihat berbasis hari di localStorage (Anti Manipulasi & Realtime Update)
   const tandaiSudahDilihat = async (iklanId) => {
@@ -495,15 +499,25 @@ export default function DetailIklan() {
                 </div>
               </div>
 
-              <div className="p-3.5 bg-teal-50 border border-teal-200 rounded-2xl flex items-center justify-between gap-3">
+              <div className="p-3.5 bg-teal-50 border border-teal-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <span className="text-xs text-teal-800 block">Kode di Layar:</span>
                   <span className="font-mono text-xl sm:text-2xl font-black text-teal-950">{iklan.kode_verifikasi || 'KB-XXXX'}</span>
                 </div>
-                <span className="text-xs font-bold text-teal-800 bg-white px-3 py-1.5 rounded-xl border border-teal-200 shadow-xs inline-flex items-center gap-1.5">
-                  <FileCheck className="w-4 h-4 text-teal-600" />
-                  <span>Cocokkan dengan Tulisan di Foto</span>
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-teal-800 bg-white px-3 py-1.5 rounded-xl border border-teal-200 shadow-xs inline-flex items-center gap-1.5">
+                    <FileCheck className="w-4 h-4 text-teal-600" />
+                    <span>Cocokkan dengan Tulisan di Foto</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setModalBuktiOpen(true)}
+                    className="text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 px-3.5 py-1.5 rounded-xl shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                    <span>Inspeksi Bukti</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -754,6 +768,84 @@ export default function DetailIklan() {
 
         </div>
       </section>
+
+      {/* ================= MODAL INSPEKSI KEASLIAN BUKTI FISIK ================= */}
+      {modalBuktiOpen && iklan.foto_bukti_kepemilikan_url && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            
+            {/* Header Modal */}
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-slate-900">
+                    Inspeksi Bukti Kepemilikan Fisik
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Verifikasi kode unik anti-curian resmi Buktip
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalBuktiOpen(false)}
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Foto Bukti Resolusi Penuh */}
+            <div className="relative aspect-[4/3] bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 flex items-center justify-center">
+              <img
+                src={iklan.foto_bukti_kepemilikan_url}
+                alt={`Bukti Fisik ${iklan.kode_verifikasi}`}
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute bottom-3 right-3 bg-slate-900/90 text-white font-mono text-xs px-3 py-1 rounded-lg border border-white/20">
+                Kode Sistem: {iklan.kode_verifikasi}
+              </div>
+            </div>
+
+            {/* Checklist Verifikasi Keamanan */}
+            <div className="p-4 bg-teal-50/80 rounded-2xl border border-teal-200 space-y-3">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-teal-900 flex items-center gap-1.5">
+                <FileCheck className="w-4 h-4 text-teal-600" />
+                <span>Panduan Verifikasi Pembeli</span>
+              </h4>
+              <div className="space-y-2 text-xs text-slate-700">
+                <div className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                  <span>Pastikan tulisan tangan kode <strong className="font-mono text-teal-950 font-bold">{iklan.kode_verifikasi}</strong> di atas kertas kertas cocok persis.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                  <span>Kertas bertuliskan kode harus berada dalam 1 frame foto bersama fisik unit HP.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                  <span>Saat COD, periksa kembali fisik HP dan cocokkan dengan foto sebelum menyelesaikan pembayaran.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tombol Tutup */}
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setModalBuktiOpen(false)}
+                className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer"
+              >
+                Saya Mengerti & Tutup
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
